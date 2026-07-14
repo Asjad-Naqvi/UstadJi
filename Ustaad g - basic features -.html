@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>USTAAD G -- Basic Features Detail</title>
+<style>
+:root{
+  --bg:#0D1B2A;
+  --bg-soft:#122436;
+  --paper:#F5F1E6;
+  --line:#2E4256;
+  --cyan:#5FD9C9;
+  --amber:#F2A65A;
+  --coral:#E8635A;
+  --text:#E9EEF2;
+  --text-dim:#9FB2C2;
+  --mono:'IBM Plex Mono', monospace;
+  --display:'Space Grotesk', sans-serif;
+  --body:'IBM Plex Sans', sans-serif;
+}
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--body);
+  line-height:1.6;
+}
+::selection{background:var(--cyan);color:#0D1B2A;}
+
+/* Blueprint grid background */
+.grid-bg{
+  background-image:
+    linear-gradient(rgba(95,217,201,0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(95,217,201,0.05) 1px, transparent 1px);
+  background-size:32px 32px;
+}
+
+header.hero{
+  padding:70px 6vw 50px;
+  border-bottom:1px solid var(--line);
+  position:relative;
+  overflow:hidden;
+}
+.eyebrow{
+  font-family:var(--mono);
+  color:var(--cyan);
+  letter-spacing:3px;
+  font-size:12px;
+  text-transform:uppercase;
+  border:1px solid var(--cyan);
+  display:inline-block;
+  padding:4px 10px;
+  border-radius:2px;
+  margin-bottom:20px;
+}
+h1.title{
+  font-family:var(--display);
+  font-size:clamp(32px,6vw,64px);
+  margin:0 0 14px;
+  font-weight:600;
+  letter-spacing:-1px;
+  max-width:900px;
+}
+.subtitle{
+  color:var(--text-dim);
+  font-size:17px;
+  max-width:680px;
+  margin-bottom:0;
+}
+.corner-frame{
+  position:absolute;
+  width:26px;height:26px;
+  border-color:var(--cyan);
+  border-style:solid;
+  opacity:0.6;
+}
+.tl{top:20px;left:20px;border-width:2px 0 0 2px;}
+.tr{top:20px;right:20px;border-width:2px 2px 0 0;}
+.br{bottom:20px;right:20px;border-width:0 2px 2px 0;}
+.bl{bottom:20px;left:20px;border-width:0 0 2px 2px;}
+
+/* TOC */
+nav.toc{
+  background:var(--bg-soft);
+  border-bottom:1px solid var(--line);
+  padding:18px 6vw;
+  position:sticky;
+  top:0;
+  z-index:50;
+  backdrop-filter:blur(6px);
+}
+nav.toc .toc-label{
+  font-family:var(--mono);
+  font-size:11px;
+  color:var(--text-dim);
+  letter-spacing:2px;
+  margin-bottom:8px;
+  text-transform:uppercase;
+}
+.toc-links{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px 10px;
+}
+.toc-links a{
+  font-family:var(--mono);
+  font-size:12.5px;
+  color:var(--text);
+  text-decoration:none;
+  background:rgba(95,217,201,0.08);
+  border:1px solid var(--line);
+  padding:6px 10px;
+  border-radius:3px;
+  transition:all .15s ease;
+  white-space:nowrap;
+}
+.toc-links a:hover{
+  border-color:var(--cyan);
+  color:var(--cyan);
+  background:rgba(95,217,201,0.15);
+}
+
+main{padding:10px 6vw 80px;max-width:1180px;margin:0 auto;}
+
+/* Feature card */
+details.feature{
+  border:1px solid var(--line);
+  border-radius:6px;
+  margin:26px 0;
+  background:linear-gradient(180deg, rgba(95,217,201,0.02), transparent);
+  scroll-margin-top:90px;
+}
+details.feature summary{
+  list-style:none;
+  cursor:pointer;
+  padding:22px 26px;
+  display:flex;
+  align-items:center;
+  gap:16px;
+  font-family:var(--display);
+  font-size:22px;
+  font-weight:600;
+  color:var(--text);
+}
+details.feature summary::-webkit-details-marker{display:none;}
+.feat-num{
+  font-family:var(--mono);
+  font-size:13px;
+  color:var(--bg);
+  background:var(--cyan);
+  padding:3px 8px;
+  border-radius:3px;
+  flex-shrink:0;
+}
+summary .chev{
+  margin-left:auto;
+  font-family:var(--mono);
+  color:var(--text-dim);
+  transition:transform .2s ease;
+  font-size:14px;
+}
+details[open] summary .chev{transform:rotate(180deg);}
+
+.feature-body{padding:0 26px 30px;}
+
+.section-label{
+  font-family:var(--mono);
+  font-size:11px;
+  letter-spacing:2px;
+  text-transform:uppercase;
+  color:var(--amber);
+  margin:28px 0 12px;
+  border-left:3px solid var(--amber);
+  padding-left:10px;
+}
+.section-label.cyan{color:var(--cyan);border-color:var(--cyan);}
+.section-label.coral{color:var(--coral);border-color:var(--coral);}
+
+/* Flow diagram */
+.flow{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:0;
+  background:var(--bg);
+  border:1px dashed var(--line);
+  border-radius:6px;
+  padding:20px;
+}
+.flow-step{
+  background:var(--bg-soft);
+  border:1px solid var(--cyan);
+  border-radius:4px;
+  padding:10px 14px;
+  font-family:var(--mono);
+  font-size:12.5px;
+  color:var(--text);
+  text-align:center;
+  max-width:170px;
+  min-height:44px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.flow-arrow{
+  color:var(--amber);
+  font-size:18px;
+  padding:0 10px;
+  flex-shrink:0;
+}
+
+/* Tools table */
+.tool-list{display:flex;flex-direction:column;gap:14px;}
+.tool-item{
+  border:1px solid var(--line);
+  border-left:3px solid var(--cyan);
+  border-radius:4px;
+  padding:14px 18px;
+  background:rgba(255,255,255,0.015);
+}
+.tool-item .tname{
+  font-family:var(--mono);
+  color:var(--cyan);
+  font-size:14.5px;
+  font-weight:600;
+  margin-bottom:6px;
+  display:block;
+}
+.tool-item p{margin:0;color:var(--text-dim);font-size:14.5px;}
+.tool-item .tag{
+  display:inline-block;
+  font-family:var(--mono);
+  font-size:10px;
+  padding:2px 6px;
+  border-radius:2px;
+  margin-left:8px;
+  letter-spacing:1px;
+}
+.tag.free{background:rgba(95,217,201,0.15);color:var(--cyan);}
+.tag.api{background:rgba(232,99,90,0.15);color:var(--coral);}
+
+/* Alternatives */
+.alt-box{
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:16px 18px;
+  background:rgba(255,255,255,0.015);
+  margin-bottom:12px;
+}
+.alt-box .recommend{
+  color:var(--cyan);
+  font-family:var(--mono);
+  font-size:12px;
+  letter-spacing:1px;
+  text-transform:uppercase;
+  margin-bottom:6px;
+  display:block;
+}
+.alt-box p{margin:0;color:var(--text-dim);font-size:14.5px;}
+
+/* Edge cases */
+.edge-list{margin:0;padding-left:0;list-style:none;}
+.edge-list li{
+  padding:10px 14px;
+  border-left:3px solid var(--coral);
+  background:rgba(232,99,90,0.05);
+  margin-bottom:10px;
+  border-radius:3px;
+  font-size:14.5px;
+  color:var(--text-dim);
+}
+.edge-list li b{color:var(--text);}
+
+/* Guidance section */
+section.guidance{
+  margin-top:60px;
+  border-top:2px solid var(--cyan);
+  padding-top:40px;
+}
+section.guidance h2{
+  font-family:var(--display);
+  font-size:clamp(26px,4vw,38px);
+  margin-bottom:6px;
+}
+section.guidance .lead{color:var(--text-dim);max-width:750px;margin-bottom:30px;}
+.roadmap{
+  display:flex;
+  flex-direction:column;
+  gap:0;
+  border-left:2px solid var(--line);
+  margin-left:12px;
+  padding-left:26px;
+}
+.road-step{position:relative;padding-bottom:34px;}
+.road-step::before{
+  content:"";
+  position:absolute;
+  left:-33px;
+  top:4px;
+  width:12px;height:12px;
+  border-radius:50%;
+  background:var(--cyan);
+  box-shadow:0 0 0 4px var(--bg), 0 0 0 5px var(--line);
+}
+.road-step h3{
+  font-family:var(--display);
+  margin:0 0 6px;
+  font-size:18px;
+  color:var(--text);
+}
+.road-step p{margin:0;color:var(--text-dim);font-size:14.5px;max-width:720px;}
+.road-step .weeks{
+  font-family:var(--mono);
+  font-size:11px;
+  color:var(--amber);
+  margin-bottom:4px;
+  display:block;
+  letter-spacing:1px;
+}
+
+.stack-table{
+  width:100%;
+  border-collapse:collapse;
+  margin:20px 0 40px;
+  font-size:14px;
+}
+.stack-table th, .stack-table td{
+  border:1px solid var(--line);
+  padding:10px 12px;
+  text-align:left;
+}
+.stack-table th{
+  background:var(--bg-soft);
+  font-family:var(--mono);
+  font-size:11.5px;
+  letter-spacing:1px;
+  text-transform:uppercase;
+  color:var(--cyan);
+}
+.stack-table td{color:var(--text-dim);}
+.stack-table td b{color:var(--text);}
+
+.tips-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+  gap:18px;
+  margin:20px 0 40px;
+}
+.tip-card{
+  border:1px solid var(--line);
+  border-radius:6px;
+  padding:18px;
+  background:rgba(255,255,255,0.015);
+}
+.tip-card .tip-icon{
+  font-family:var(--mono);
+  color:var(--bg);
+  background:var(--amber);
+  width:26px;height:26px;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:13px;
+  margin-bottom:10px;
+}
+.tip-card h4{margin:0 0 6px;font-family:var(--display);font-size:16px;}
+.tip-card p{margin:0;color:var(--text-dim);font-size:14px;}
+
+.closing{
+  margin-top:40px;
+  padding:26px;
+  border:1px dashed var(--cyan);
+  border-radius:6px;
+  background:rgba(95,217,201,0.04);
+}
+.closing p{color:var(--text-dim);font-size:15px;margin:0 0 12px;}
+.closing p:last-child{margin-bottom:0;}
+.closing b{color:var(--cyan);}
+
+footer{
+  text-align:center;
+  padding:30px;
+  color:var(--text-dim);
+  font-family:var(--mono);
+  font-size:12px;
+  border-top:1px solid var(--line);
+}
+
+@media (max-width:640px){
+  header.hero{padding:50px 5vw 36px;}
+  main{padding:10px 5vw 60px;}
+  details.feature summary{font-size:18px;padding:18px;}
+  .feature-body{padding:0 18px 24px;}
+}
+</style>
+</head>
+<body class="grid-bg">
+
+<header class="hero">
+  <span class="corner-frame tl"></span><span class="corner-frame tr"></span>
+  <span class="corner-frame bl"></span><span class="corner-frame br"></span>
+  <div class="eyebrow">Final Year Project · Blueprint Document</div>
+  <h1 class="title">USTAAD G — an AI-assisted home services marketplace</h1>
+  <p class="subtitle">This document is your project's engineering blueprint. For every feature of the app you planned, you'll find a flow diagram, the exact tools and concepts to learn, the alternatives you could pick instead (and which one is worth the most in a company's eyes), the edge cases you must plan for, and — at the very end — a full teacher-style roadmap for how to actually build, document, and present this project so it stands out.</p>
+</header>
+
+<nav class="toc">
+  <div class="toc-label">Jump to a feature</div>
+  <div class="toc-links">
+    <a href="#f1">01 · Registration & Login</a>
+    <a href="#f2">02 · Service Request</a>
+    <a href="#f3">03 · Nearby Matching</a>
+    <a href="#f4">04 · Smart Ranking</a>
+    <a href="#f5">05 · Agent Assistance</a>
+    <a href="#f6">06 · Communication</a>
+    <a href="#f7">07 · Booking</a>
+    <a href="#f8">08 · Live Tracking</a>
+    <a href="#f9">09 · Ratings & Reviews</a>
+    <a href="#f10">10 · Service History</a>
+    <a href="#f11">11 · Provider Dashboard</a>
+    <a href="#guidance">🎓 Teacher's Guidance</a>
+  </div>
+</nav>
+
+<main>
+
+<!-- FEATURE 1 -->
+<details class="feature" id="f1" open>
+<summary><span class="feat-num">01</span> User Registration and Login <span class="chev">▾</span></summary>
+<div class="feature-body">
+
+<div class="section-label cyan">1 · How it flows</div>
+<div class="flow">
+  <div class="flow-step">Open app → pick role: User or Provider</div><div class="flow-arrow">→</div>
+  <div class="flow-step">Fill signup form (name, email, phone, password)</div><div class="flow-arrow">→</div>
+  <div class="flow-step">Backend hashes password, checks duplicates</div><div class="flow-arrow">→</div>
+  <div class="flow-step">Save user in database</div><div class="flow-arrow">→</div>
+  <div class="flow-step">Send OTP/email verification</div><div class="flow-arrow">→</div>
+  <div class="flow-step">Login → server issues JWT token</div><div class="flow-arrow">→</div>
+  <div class="flow-step">Token unlocks dashboard/app screens</div>
+</div>
+
+<div class="section-label">2 · Tools & concepts (explained simply)</div>
+<div class="tool-list">
+  <div class="tool-item"><span class="tname">FastAPI (Python)<span class="tag free">Free</span></span>
+  <p>This is your backend "brain" — the program that receives the signup form data from the app, decides what to do with it, and talks to the database. Why FastAPI: it's Python (which you already know as a Data Science student), it's fast, modern, and every company today expects to see it or Flask/Django on a resume.</p></div>
+
+  <div class="tool-item"><span class="tname">bcrypt<span class="tag free">Free</span></span>
+  <p>Never store a password as plain text — if your database is ever leaked, every account is compromised. bcrypt is a small library that scrambles ("hashes") the password into unreadable text before saving it. When the user logs in later, bcrypt checks if the typed password matches the scrambled one, without ever un-scrambling it.</p></div>
+
+  <div class="tool-item"><span class="tname">JWT — JSON Web Token<span class="tag free">Free</span></span>
+  <p>After login, the server needs a way to remember "this device belongs to this logged-in user" without asking for the password on every single click. A JWT is a small signed digital ticket the server hands to the app; the app shows this ticket on every future request instead of the password.</p></div>
+
+  <div class="tool-item"><span class="tname">PostgreSQL<span class="tag free">Free</span></span>
+  <p>This is where all user and provider accounts actually live — like a giant, very organized spreadsheet that your backend can query instantly. PostgreSQL is chosen over a plain file because it enforces rules (no two accounts with the same email) and scales to thousands of users.</p></div>
+
+  <div class="tool-item"><span class="tname">SMTP / free email API (only for sending the verification email)<span class="tag api">API needed here</span></span>
+  <p>Sending a real email to a real inbox requires talking to a mail server — this genuinely can't be built entirely by yourself without huge effort, so a small free-tier service (e.g. Gmail SMTP or SendGrid free tier) is the one honest place to use an external service in this feature.</p></div>
+</div>
+
+<div class="section-label coral">3 · Alternatives & what to actually pick</div>
+<div class="alt-box"><span class="recommend">Recommended: self-built JWT + bcrypt (with Google OAuth added on top)</span>
+<p>Firebase Authentication is faster to set up, but it hides all the logic inside Google's servers — an interviewer can't tell if you understand authentication or just plugged in a service. Building your own login system with bcrypt + JWT, and then <i>additionally</i> offering "Sign in with Google" (a well-known, genuinely necessary use of OAuth), shows both fundamentals and awareness of modern UX. Auth0 is enterprise-grade but costly and overkill for a student project.</p></div>
+
+<div class="section-label coral">4 · Edge cases to plan for</div>
+<ul class="edge-list">
+  <li><b>Duplicate email signup</b> — check the database before creating a new account and show a clear error.</li>
+  <li><b>Weak passwords</b> — enforce a minimum length and character mix on the form before it even reaches the backend.</li>
+  <li><b>OTP/email link expiry</b> — give the verification code a 10–15 minute lifespan and allow "resend."</li>
+  <li><b>Forgot password</b> — build a reset-link flow, don't just leave this out.</li>
+  <li><b>Wrong role selected</b> — let users switch or contact support if they signed up as the wrong type by mistake.</li>
+  <li><b>Repeated failed logins</b> — temporarily lock the account after 5 failed attempts to block brute-force guessing.</li>
+</ul>
+
+</div>
+</details>
+
+<!-- FEATURE 2 -->
+<details class="feature" id="f2">
+<summary><span class="feat-num">02</span> Service Request Creation <span class="chev">▾</span></summary>
+<div class="feature-body">
+
+<div class="section-label cyan">1 · How it flows</div>
+<div class="flow">
+  <div class="flow-step">User types problem description (+ optional photo)</div><div class="flow-arrow">→</div>
+  <div class="flow-step">Text classifier model predicts category</div><div class="flow-arrow">→</div>
+  <div class="flow-step">User confirms or edits the category</div><div class="flow-arrow">→</div>
+  <div class="flow-step">Request saved to database</div><div class="flow-arrow">→</div>
+  <div class="flow-step">Sent to the matching engine (feature 03)</div>
+</div>
+
+<div class="section-label">2 · Tools & concepts (explained simply)</div>
+<div class="tool-list">
+  <div class="tool-item"><span class="tname">scikit-learn text classifier (TF-IDF + Logistic Regression / Naive Bayes)<span class="tag free">Free</span></span>
+  <p>This is the actual Data Science piece of this feature. You collect example sentences ("my tap is leaking", "no power in the kitchen") labelled with their correct category, and train a small model to guess the category from new text automatically. TF-IDF turns words into numbers the model can understand; Logistic Regression/Naive Bayes then learns the pattern.</p></div>
+
+  <div class="tool-item"><span class="tname">Image upload & storage<span class="tag free">Free/local</span></span>
+  <p>Letting a user attach a photo of the broken tap helps the provider understand the job before arriving. Store images on your own server's disk folder for the student version (completely free); only move to a cloud storage service later if you deploy publicly and need reliability.</p></div>
+
+  <div class="tool-item"><span class="tname">PostgreSQL table: service_requests<span class="tag free">Free</span></span>
+  <p>Stores the description, chosen category, photo path, user id, location, and timestamp — this becomes the single source of truth the rest of the app (matching, booking, history) reads from.</p></div>
+</div>
+
+<div class="section-label coral">3 · Alternatives & what to actually pick</div>
+<div class="alt-box"><span class="recommend">Recommended: scikit-learn classifier as the core, with a HuggingFace transformer as a "bonus" upgrade</span>
+<p>Simple keyword matching (if description contains "leak" → plumbing) is easy but looks unimpressive on a Data Science project — there's no learning involved. A trained scikit-learn classifier shows real ML work with almost no cost. If you want an extra "wow" section for your report, add a small pretrained transformer model (e.g. DistilBERT via HuggingFace, run locally, no API fee) and compare its accuracy against your simpler model — this comparison itself is great report content.</p></div>
+
+<div class="section-label coral">4 · Edge cases to plan for</div>
+<ul class="edge-list">
+  <li><b>Vague description</b> ("something's broken") — if the model's confidence score is low, ask the user a clarifying question instead of guessing.</li>
+  <li><b>Overlapping categories</b> — some problems fit two categories (e.g. water damage from electrical fault); allow multi-category tagging.</li>
+  <li><b>Non-English or mixed-language text</b> — detect language first and fall back to manual category selection if unsupported.</li>
+  <li><b>No matching category exists</b> — always keep an "Other / Not sure" category with human review.</li>
+  <li><b>Spam/fake requests</b> — rate-limit how many requests one account can submit per hour.</li>
+</ul>
+
+</div>
+</details>
+
+<!-- FEATURE 3 -->
+<details class="feature" id="f3">
+<summary><span class="feat-num">03</span> Nearby Service Provider Matching <span class="chev">▾</span></summary>
+<div class="feature-body">
+
+<div class="section-label cyan">1 · How it flows</div>
+<div class="flow">
+  <div class="flow-step">Browser asks for GPS location (permission)</div><div class="flow-arrow">→</div>
+  <div class="flow-step">If typed address instead: geocode to lat/long</div><div class="flow-arrow">→</div>
+  <div class="flow-step">Query DB: providers within X km, matching category</div><div class="flow-arrow">→</div>
+  <div class="flow-step">Distance calculated for each candidate</div><div class="flow-arrow">→</div>
+  <div class="flow-step">Shortlist shown on map + list</div>
+</div>
+
+<div class="section-label">2 · Tools & concepts (explained simply)</div>
+<div class="tool-list">
+  <div class="tool-item"><span class="tname">Browser Geolocation API<span class="tag api">Built-in "API," free</span></span>
+  <p>This is a feature already built into every phone/laptop browser — with the user's permission, it hands your webpage the current GPS coordinates. There's no way to get real GPS location without it, so this is a genuinely necessary "API" (and it costs nothing).</p></div>
+
+  <div class="tool-item"><span class="tname">Nominatim (OpenStreetMap geocoding)<span class="tag api">Free API, only if needed</span></span>
+  <p>If a user types an address instead of sharing GPS, you need to convert "123 Main Street" into coordinates. Building your own global address database yourself is unrealistic for a student project, so this is the one honest place to lean on a free, no-signup-required API.</p></div>
+
+  <div class="tool-item"><span class="tname">Haversine formula<span class="tag free">Free — pure math</span></span>
+  <p>A simple mathematical formula (a few lines of Python) that calculates the straight-line distance between two GPS points on Earth's curved surface. You write this yourself — no library or API needed.</p></div>
+
+  <div class="tool-item"><span class="tname">PostGIS (PostgreSQL geospatial extension)<span class="tag free">Free</span></span>
+  <p>Instead of pulling every provider from the database and calculating distance one by one in Python, PostGIS lets the database itself answer "give me all providers within 5km" instantly using spatial indexing — this is exactly how real companies do it at scale, which is a strong point to mention to evaluators.</p></div>
+
+  <div class="tool-item"><span class="tname">Leaflet.js + OpenStreetMap tiles<span class="tag free">Free, no billing</span></span>
+  <p>This draws the actual visual map in the app, with pins for nearby providers. Unlike Google Maps, it needs no credit card or API key limits, which matters a lot for a student budget.</p></div>
+</div>
+
+<div class="section-label coral">3 · Alternatives & what to actually pick</div>
+<div class="alt-box"><span class="recommend">Recommended: PostGIS + Leaflet/OpenStreetMap</span>
+<p>Google Maps Platform is the most "well known" name but requires billing setup even for a free tier, which is risky for a student who might forget to set spending limits. Mapbox is a good middle-ground alternative with generous free tiers and nicer default styling if you want a more polished look. PostGIS specifically is worth highlighting in your report because many real logistics and ride-hailing companies use exactly this technology — mentioning it signals you understand production-grade geospatial systems.</p></div>
+
+<div class="section-label coral">4 · Edge cases to plan for</div>
+<ul class="edge-list">
+  <li><b>No providers within radius</b> — automatically widen the search radius step by step rather than showing an empty screen.</li>
+  <li><b>User denies location permission</b> — fall back to manual address entry.</li>
+  <li><b>Inaccurate GPS indoors</b> — show an approximate radius circle rather than a falsely precise pin.</li>
+  <li><b>Stale provider location</b> — ignore providers whose last location update is older than, say, 30 minutes.</li>
+  <li><b>Provider in a different city than listed</b> — validate location updates against a reasonable travel speed to catch GPS glitches.</li>
+</ul>
+
+</div>
+</details>
+
+<!-- FEATURE 4 -->
+<details class="feature" id="f4">
+<summary><span class="feat-num">04</span> Smart Provider Ranking <span class="chev">▾</span></summary>
+<div class="feature-body">
+
+<div class="section-label cyan">1 · How it flows</div>
+<div class="flow">
+  <div class="flow-step">Shortlist of nearby providers (from feature 03)</div><div class="flow-arrow">→</div>
+  <div class="flow-step">Pull rating, experience, reliability, distance, availability per provider</div><div class="flow-arrow">→</div>
+  <div class="flow-step">Compute a score for each</div><div class="flow-arrow">→</div>
+  <div class="flow-step">Sort providers highest score first</div><div class="flow-arrow">→</div>
+  <div class="flow-step">Show ranked list to user</div>
+</div>
+
+<div class="section-label">2 · Tools & concepts (explained simply)</div>
+<div class="tool-list">
+  <div class="tool-item"><span class="tname">Weighted scoring formula<span class="tag free">Free — your own logic</span></span>
+  <p>Start simple: score = (w1 × rating) + (w2 × experience) + (w3 × reliability) − (w4 × distance) + (w5 × availability). You choose the weights (w1...w5) based on what should matter most. This is fully transparent and easy to explain in your report — always start here before anything fancier.</p></div>
+
+  <div class="tool-item"><span class="tname">Bayesian average (for the cold-start problem)<span class="tag free">Free — a formula</span></span>
+  <p>A brand-new provider with one 5-star review shouldn't outrank an experienced provider with 100 reviews averaging 4.7. A Bayesian average "pulls" new providers' scores toward the platform's overall average until they build up enough reviews to be trusted — a well-known Data Science technique worth naming explicitly in your report.</p></div>
+
+  <div class="tool-item"><span class="tname">scikit-learn / LightGBM learning-to-rank model (advanced/optional)<span class="tag free">Free</span></span>
+  <p>Once you have some real or simulated booking history, you can train a model that learns which factors actually predict a successful, well-rated job — rather than you guessing the weights by hand. This is a genuine machine-learning ranking system, and including it (even as a stretch goal) is the single biggest "impress the evaluators" upgrade for this feature.</p></div>
+</div>
+
+<div class="section-label coral">3 · Alternatives & what to actually pick</div>
+<div class="alt-box"><span class="recommend">Recommended: build the weighted formula first, then add a learn-to-rank model as your "advanced" showcase</span>
+<p>A pure hand-tuned formula is easy but purely rule-based — fine for an MVP, less exciting for a Data Science evaluation. A full learning-to-rank model (LightGBM Ranker/XGBoost) is the closer-to-industry approach (similar in spirit to how e-commerce and ride-hailing platforms rank results) and is very demo-able: you can literally show a chart comparing "before ML ranking" vs "after ML ranking" match quality.</p></div>
+
+<div class="section-label coral">4 · Edge cases to plan for</div>
+<ul class="edge-list">
+  <li><b>New provider, no reviews yet</b> — handled by the Bayesian average, not by ignoring them entirely.</li>
+  <li><b>Tied scores</b> — break ties using distance or availability as the deciding factor.</li>
+  <li><b>Fake or inflated ratings</b> — flag providers with unusually fast bursts of 5-star reviews for manual review.</li>
+  <li><b>All top-ranked providers unavailable right now</b> — still show them but visibly mark availability and re-rank by who can actually come sooner.</li>
+</ul>
+
+</div>
+</details>
+
+<!-- FEATURE 5 -->
+<details class="feature" id="f5">
+<summary><span class="feat-num">05</span> Agent-Based Assistance <span class="chev">▾</span></summary>
+<div class="feature-body">
+
+<div class="section-label cyan">1 · How it flows</div>
+<div class="flow">
+  <div class="flow-step">User sends a message describing their situation</div><div class="flow-arrow">→</div>
+  <div class="flow-step">Agent detects intent (book / ask / complain / cancel)</div><div class="flow-arrow">→</div>
+  <div class="flow-step">Agent extracts entities (category, urgency, location)</div><div class="flow-arrow">→</div>
+  <div class="flow-step">Agent asks a follow-up question if info missing</div><div class="flow-arrow">→</div>
+  <div class="flow-step">Agent hands off to matching/booking engine</div>
+</div>
+
+<div class="section-label">2 · Tools & concepts (explained simply)</div>
+<div class="tool-list">
+  <div class="tool-item"><span class="tname">Rasa Open Source<span class="tag free">Free, self-hosted</span></span>
+  <p>Rasa is a free framework specifically built for making chat agents: it handles "what does the user want" (intent classification) and "what information do I still need from them" (dialogue management/slot filling), all running on your own machine — no per-message fee, and you fully own the logic, which is exactly what a Data Science evaluator wants to see you build.</p></div>
+
+  <div class="tool-item"><span class="tname">spaCy<span class="tag free">Free</span></span>
+  <p>Used to pull out specific useful pieces of information from a sentence — like spotting "kitchen sink" as a location detail or "urgent" as a priority flag — a concept called Named Entity Recognition. It works alongside Rasa or on its own.</p></div>
+
+  <div class="tool-item"><span class="tname">A hosted LLM API (Anthropic/OpenAI) — optional add-on only<span class="tag api">API — only where truly needed</span></span>
+  <p>If you want the agent to handle completely open-ended, free-form conversation beyond your trained intents (e.g., unusual questions), a large language model API is genuinely hard to replace with student-built tools. Keep this as a clearly-labelled fallback layer, not the whole agent, so your report shows what you engineered yourself versus what you responsibly outsourced.</p></div>
+</div>
+
+<div class="section-label coral">3 · Alternatives & what to actually pick</div>
+<div class="alt-box"><span class="recommend">Recommended: Rasa + spaCy as the core agent, LLM API as a documented fallback only</span>
+<p>Using only an LLM API for the whole agent is the easiest route, but risks looking like "I made an API call" rather than "I built an intelligent agent" — evaluators specifically watch for this in Data Science/AI projects. Google Dialogflow is a decent alternative but is fully cloud/API-dependent by design, which goes against the brief. Rasa lets you genuinely train and evaluate your own intent classifier (with accuracy scores you can report), which is much stronger portfolio material.</p></div>
+
+<div class="section-label coral">4 · Edge cases to plan for</div>
+<ul class="edge-list">
+  <li><b>Ambiguous or vague input</b> — the agent should ask a clarifying question rather than guessing wrong.</li>
+  <li><b>Requests outside the app's scope</b> — politely redirect instead of pretending to help.</li>
+  <li><b>Repetitive confusion loops</b> — after 2–3 failed clarifications, offer a "talk to human support" / manual category selection escape hatch.</li>
+  <li><b>Typos and slang</b> — include varied, informal training examples so the model doesn't only work on textbook sentences.</li>
+</ul>
+
+</div>
+</details>
+
+<!-- FEATURE 6 -->
+<details class="feature" id="f6">
+<summary><span class="feat-num">06</span> Communication Between User and Service Provider <span class="chev">▾</span></summary>
+<div class="feature-body">
+
+<div class="section-label cyan">1 · How it flows</div>
+<div class="flow">
+  <div class="flow-step">User/provider open chat screen</div><div class="flow-arrow">→</div>
+  <div class="flow-step">WebSocket connection opens with server</div><div class="flow-arrow">→</div>
+  <div class="flow-step">Message sent instantly to the other person</div><div class="flow-arrow">→</div>
+  <div class="flow-step">Message saved to database</div><div class="flow-arrow">→</div>
+  <div class="flow-step">Push notification if recipient is offline</div>
+</div>
+
+<div class="section-label">2 · Tools & concepts (explained simply)</div>
+<div class="tool-list">
+  <div class="tool-item"><span class="tname">WebSockets (via FastAPI's built-in WebSocket support, or Socket.io)<span class="tag free">Free, self-built</span></span>
+  <p>A normal web request is like sending a letter and waiting for a reply — slow for chat. A WebSocket is like an open phone line: once connected, both sides can send messages instantly, back and forth, without reconnecting each time. This is the real technology behind every chat app.</p></div>
+
+  <div class="tool-item"><span class="tname">PostgreSQL/MongoDB chat history table<span class="tag free">Free</span></span>
+  <p>Even though messages travel instantly, you still save every message to a database so the conversation isn't lost if someone closes the app and reopens it later.</p></div>
+
+  <div class="tool-item"><span class="tname">Simple profanity/abuse filter (word-list based, e.g. better-profanity library)<span class="tag free">Free</span></span>
+  <p>A basic safety net that scans outgoing messages for obviously abusive language before they're sent, protecting both users and providers.</p></div>
+</div>
+
+<div class="section-label coral">3 · Alternatives & what to actually pick</div>
+<div class="alt-box"><span class="recommend">Recommended: self-built WebSocket server</span>
+<p>Firebase Realtime Database/Firestore is very quick to set up but is entirely dependent on Google's service — it teaches you the "what" but not the "how" of real-time systems. Building your own WebSocket server demonstrates genuine backend systems knowledge, which stands out far more to a hiring engineer than "I connected to Firebase."</p></div>
+
+<div class="section-label coral">4 · Edge cases to plan for</div>
+<ul class="edge-list">
+  <li><b>Recipient offline</b> — queue the message and deliver it (plus a notification) when they reconnect.</li>
+  <li><b>Network drops mid-chat</b> — auto-reconnect the WebSocket and resend any unsent messages.</li>
+  <li><b>Message ordering</b> — timestamp every message server-side so order is always consistent, even under lag.</li>
+  <li><b>Large file/image sharing</b> — enforce a file size limit and show upload progress.</li>
+  <li><b>Abusive messages</b> — filter + allow reporting, with a manual review queue.</li>
+</ul>
+
+</div>
+</details>
+
+<!-- FEATURE 7 -->
+<details class="feature" id="f7">
+<summary><span class="feat-num">07</span> Booking and Scheduling <span class="chev">▾</span></summary>
+<div class="feature-body">
+
+<div class="section-label cyan">1 · How it flows</div>
+<div class="flow">
+  <div class="flow-step">User views provider's available time slots</div><div class="flow-arrow">→</div>
+  <div class="flow-step">User picks a date & time</div><div class="flow-arrow">→</div>
+  <div class="flow-step">Backend checks for scheduling conflicts</div><div class="flow-arrow">→</div>
+  <div class="flow-step">Booking confirmed & saved</div><div class="flow-arrow">→</div>
+  <div class="flow-step">Confirmation sent to both sides</div>
+</div>
+
+<div class="section-label">2 · Tools & concepts (explained simply)</div>
+<div class="tool-list">
+  <div class="tool-item"><span class="tname">react-datepicker / calendar UI component<span class="tag free">Free, open-source</span></span>
+  <p>A ready-made, free calendar widget so users don't have to type dates manually — reduces bugs and looks professional immediately.</p></div>
+
+  <div class="tool-item"><span class="tname">Database transactions with unique constraints<span class="tag free">Free — a DB concept</span></span>
+  <p>To stop two users from booking the exact same provider slot at the exact same time, you use a database "transaction" — a rule that says "check and book in one uninterruptible step," so two requests can never both succeed for the same slot.</p></div>
+</div>
+
+<div class="section-label coral">3 · Alternatives & what to actually pick</div>
+<div class="alt-box"><span class="recommend">Recommended: self-built scheduling logic, with Google Calendar sync as an optional bonus</span>
+<p>Relying purely on Google Calendar API for scheduling logic makes your core feature dependent on an external service for something you can absolutely build yourself with database rules. Build the core booking/conflict logic yourself, and optionally add a "sync to my Google Calendar" export button as a nice-to-have — this shows you know when an API is a genuine convenience add-on versus a core dependency.</p></div>
+
+<div class="section-label coral">4 · Edge cases to plan for</div>
+<ul class="edge-list">
+  <li><b>Double booking</b> — prevented using a database transaction/lock on the time slot.</li>
+  <li><b>Last-minute provider cancellation</b> — notify the user immediately and auto-suggest the next best available provider.</li>
+  <li><b>Time zone differences</b> — store all times in UTC internally, convert only for display.</li>
+  <li><b>No-shows</b> — track no-show counts and factor them into the provider's reliability score (feature 04).</li>
+  <li><b>Rescheduling requests</b> — allow edits up to a cutoff time, then require cancellation + rebooking instead.</li>
+</ul>
+
+</div>
+</details>
+
+<!-- FEATURE 8 -->
+<details class="feature" id="f8">
+<summary><span class="feat-num">08</span> Real-Time Service Tracking <span class="chev">▾</span></summary>
+<div class="feature-body">
+
+<div class="section-label cyan">1 · How it flows</div>
+<div class="flow">
+  <div class="flow-step">Provider starts the job → app begins sharing location</div><div class="flow-arrow">→</div>
+  <div class="flow-step">Location sent every few seconds via WebSocket</div><div class="flow-arrow">→</div>
+  <div class="flow-step">User's map marker updates live</div><div class="flow-arrow">→</div>
+  <div class="flow-step">Status updates: on the way / arrived / in progress / done</div>
+</div>
+
+<div class="section-label">2 · Tools & concepts (explained simply)</div>
+<div class="tool-list">
+  <div class="tool-item"><span class="tname">Browser Geolocation API (same as feature 03)<span class="tag api">Built-in, free</span></span>
+  <p>Reused here on the provider's side of the app to continuously report their position during an active job.</p></div>
+
+  <div class="tool-item"><span class="tname">Same WebSocket server (reused from feature 06)<span class="tag free">Free</span></span>
+  <p>You don't need a separate system — the same real-time connection technology that powers chat also pushes live location updates, keeping your architecture simple.</p></div>
+
+  <div class="tool-item"><span class="tname">Leaflet.js live marker updates<span class="tag free">Free</span></span>
+  <p>The map you already built for provider matching is reused here — instead of static pins, the provider's pin now moves in real time as new coordinates arrive.</p></div>
+</div>
+
+<div class="section-label coral">3 · Alternatives & what to actually pick</div>
+<div class="alt-box"><span class="recommend">Recommended: Leaflet + WebSockets, exactly as used in earlier features</span>
+<p>Google Maps' live tracking widgets look polished but come with per-load billing at scale. Reusing your own free stack here also makes your architecture cleaner and easier to explain in a viva — "I built one real-time engine and reused it for chat and tracking" is a genuinely impressive architectural decision to point out.</p></div>
+
+<div class="section-label coral">4 · Edge cases to plan for</div>
+<ul class="edge-list">
+  <li><b>GPS/network signal lost</b> — show "last known location" with a timestamp instead of freezing silently.</li>
+  <li><b>Provider forgets to start tracking</b> — provide a manual "I've arrived" status button as a fallback.</li>
+  <li><b>Battery-saving mode limits updates</b> — reduce update frequency gracefully rather than failing.</li>
+  <li><b>Privacy</b> — only share live location while a job is actively in progress, never continuously.</li>
+</ul>
+
+</div>
+</details>
+
+<!-- FEATURE 9 -->
+<details class="feature" id="f9">
+<summary><span class="feat-num">09</span> Ratings and Reviews <span class="chev">▾</span></summary>
+<div class="feature-body">
+
+<div class="section-label cyan">1 · How it flows</div>
+<div class="flow">
+  <div class="flow-step">Job marked complete</div><div class="flow-arrow">→</div>
+  <div class="flow-step">User prompted for star rating + written review</div><div class="flow-arrow">→</div>
+  <div class="flow-step">Review text checked for sentiment & abusive language</div><div class="flow-arrow">→</div>
+  <div class="flow-step">Stored, provider's average rating recalculated</div>
+</div>
+
+<div class="section-label">2 · Tools & concepts (explained simply)</div>
+<div class="tool-list">
+  <div class="tool-item"><span class="tname">VADER / TextBlob sentiment analysis<span class="tag free">Free, open-source</span></span>
+  <p>These are ready-made Python tools that read a review's text and estimate whether it sounds positive, neutral, or negative — useful for automatically flagging a written review that says something very negative even if the star rating given was oddly high (a mismatch worth a human's attention).</p></div>
+
+  <div class="tool-item"><span class="tname">better-profanity library (or a simple word-list filter)<span class="tag free">Free</span></span>
+  <p>Automatically blocks or masks offensive language in submitted reviews before they're published publicly.</p></div>
+
+  <div class="tool-item"><span class="tname">Bayesian average (reused from feature 04)<span class="tag free">Free — a formula</span></span>
+  <p>Keeps a provider's overall star rating fair even with very few reviews so far, instead of letting one review swing it wildly.</p></div>
+</div>
+
+<div class="section-label coral">3 · Alternatives & what to actually pick</div>
+<div class="alt-box"><span class="recommend">Recommended: VADER/TextBlob sentiment analysis + Bayesian averaging</span>
+<p>Manual moderation only (a human reads every review) doesn't scale and shows no Data Science work. Adding automated sentiment analysis and profanity filtering is inexpensive, genuinely useful, and gives you a natural NLP section to include in your report — you can even show an evaluation of how accurately your sentiment tool agrees with the star rating given.</p></div>
+
+<div class="section-label coral">4 · Edge cases to plan for</div>
+<ul class="edge-list">
+  <li><b>No review submitted</b> — still count the completed job, just without written feedback.</li>
+  <li><b>Review bombing</b> — detect unusual bursts of extreme ratings in a short time window and flag for review.</li>
+  <li><b>Sentiment vs. star rating mismatch</b> — flag reviews where the text sounds very negative but the star rating is high (or vice versa).</li>
+  <li><b>Disputed ratings</b> — allow a formal dispute/appeal process rather than letting one bad rating be permanent and unquestionable.</li>
+</ul>
+
+</div>
+</details>
+
+<!-- FEATURE 10 -->
+<details class="feature" id="f10">
+<summary><span class="feat-num">10</span> Service History <span class="chev">▾</span></summary>
+<div class="feature-body">
+
+<div class="section-label cyan">1 · How it flows</div>
+<div class="flow">
+  <div class="flow-step">User/provider opens "History" tab</div><div class="flow-arrow">→</div>
+  <div class="flow-step">Backend queries DB filtered by their id, paginated</div><div class="flow-arrow">→</div>
+  <div class="flow-step">List displayed with filters (date, category, status)</div>
+</div>
+
+<div class="section-label">2 · Tools & concepts (explained simply)</div>
+<div class="tool-list">
+  <div class="tool-item"><span class="tname">Database indexing<span class="tag free">Free — a DB concept</span></span>
+  <p>An index is like the index at the back of a textbook — it lets the database jump straight to a user's records instead of scanning the entire table, keeping history loading fast even with thousands of bookings.</p></div>
+
+  <div class="tool-item"><span class="tname">Pagination (LIMIT/OFFSET or cursor-based)<span class="tag free">Free — a backend concept</span></span>
+  <p>Instead of sending a user's entire history at once, the backend sends it in small pages (e.g. 20 records at a time) as the user scrolls — much faster and lighter on the app.</p></div>
+</div>
+
+<div class="section-label coral">3 · Alternatives & what to actually pick</div>
+<div class="alt-box"><span class="recommend">Recommended: plain indexed SQL queries with pagination</span>
+<p>Elasticsearch is what large companies use for lightning-fast search across millions of records, but it is overkill for a student project's data size. Mentioning in your report "at production scale, this could migrate to Elasticsearch" shows awareness of how real systems evolve, without over-engineering your actual build.</p></div>
+
+<div class="section-label coral">4 · Edge cases to plan for</div>
+<ul class="edge-list">
+  <li><b>Very long history</b> — always paginate, never load everything at once.</li>
+  <li><b>Deleted/inactive accounts</b> — soft-delete (mark as inactive) rather than erasing records outright, to preserve audit/history integrity.</li>
+  <li><b>Filters returning nothing</b> — show a friendly empty state rather than a blank screen.</li>
+  <li><b>Exporting history</b> — a nice optional extra: let users download their history as a PDF using a free PDF-generation library.</li>
+</ul>
+
+</div>
+</details>
+
+<!-- FEATURE 11 -->
+<details class="feature" id="f11">
+<summary><span class="feat-num">11</span> Provider Dashboard <span class="chev">▾</span></summary>
+<div class="feature-body">
+
+<div class="section-label cyan">1 · How it flows</div>
+<div class="flow">
+  <div class="flow-step">Provider logs in</div><div class="flow-arrow">→</div>
+  <div class="flow-step">Dashboard loads bookings, ratings, earnings</div><div class="flow-arrow">→</div>
+  <div class="flow-step">Provider toggles availability / updates schedule</div><div class="flow-arrow">→</div>
+  <div class="flow-step">Charts display performance trends over time</div>
+</div>
+
+<div class="section-label">2 · Tools & concepts (explained simply)</div>
+<div class="tool-list">
+  <div class="tool-item"><span class="tname">Plotly (or Chart.js) for the frontend charts<span class="tag free">Free, open-source</span></span>
+  <p>Turns raw numbers (jobs completed per week, average rating over time, earnings) into visual charts. Plotly is more interactive and has a stronger "Data Science" feel, which fits nicely with your academic background.</p></div>
+
+  <div class="tool-item"><span class="tname">SQL aggregate queries (GROUP BY, AVG, COUNT)<span class="tag free">Free — a DB concept</span></span>
+  <p>The database itself calculates things like "average rating this month" or "total jobs completed" directly, rather than pulling every row into Python and calculating it there — much faster and is a core SQL skill worth demonstrating.</p></div>
+</div>
+
+<div class="section-label coral">3 · Alternatives & what to actually pick</div>
+<div class="alt-box"><span class="recommend">Recommended: Plotly for the dashboard visuals</span>
+<p>Chart.js is lighter and simpler, a fine choice if you're short on time. Plotly produces richer, more interactive charts (zoom, hover tooltips) and is a library Data Science evaluators will immediately recognize and respect, since it's widely used in real analytics work.</p></div>
+
+<div class="section-label coral">4 · Edge cases to plan for</div>
+<ul class="edge-list">
+  <li><b>Provider with no bookings yet</b> — show an encouraging empty state, not a broken chart.</li>
+  <li><b>Marked unavailable mid-booking</b> — must still complete any already-confirmed bookings before going fully offline.</li>
+  <li><b>Overlapping availability edits</b> — validate new availability windows against existing bookings before saving.</li>
+  <li><b>Earnings calculation errors</b> — use database transactions so an earnings update can never be partially applied.</li>
+</ul>
+
+</div>
+</details>
+
+<!-- GUIDANCE -->
+<section class="guidance" id="guidance">
+<h2>🎓 Now, let's talk about how to actually build this — teacher to student</h2>
+<p class="lead">You told me this is your first time building an app end-to-end, so let's slow down and go through this properly, the way I'd explain it if you were sitting across from me. Read this section fully before you write a single line of code.</p>
+
+<div class="section-label cyan">Your recommended overall tech stack</div>
+<table class="stack-table">
+<tr><th>Layer</th><th>Choice</th><th>Why this one</th></tr>
+<tr><td>Backend</td><td><b>FastAPI (Python)</b></td><td>Python keeps you in familiar Data-Science territory and FastAPI is genuinely used by companies today — it also makes it trivial to load your ML models directly into the same backend.</td></tr>
+<tr><td>Frontend</td><td><b>React.js</b></td><td>The most in-demand frontend skill; if it feels heavy at first, start with plain HTML/CSS/JS for your very first prototype and migrate once comfortable.</td></tr>
+<tr><td>Database</td><td><b>PostgreSQL + PostGIS</b></td><td>Handles structured data (users, bookings) and geospatial "nearby" queries in one place — one tool, two jobs.</td></tr>
+<tr><td>Real-time layer</td><td><b>WebSockets (FastAPI built-in)</b></td><td>Powers both chat and live tracking with one system.</td></tr>
+<tr><td>ML/NLP</td><td><b>scikit-learn, spaCy, Rasa, VADER</b></td><td>All free, all run on your own laptop, all genuinely "yours" to explain in a viva.</td></tr>
+<tr><td>Maps</td><td><b>Leaflet.js + OpenStreetMap</b></td><td>Zero cost, zero billing risk.</td></tr>
+<tr><td>Version control</td><td><b>Git + GitHub</b></td><td>Non-negotiable — every serious project (and every company) expects to see your commit history.</td></tr>
+<tr><td>Deployment (free tier)</td><td><b>Render/Railway (backend) + Vercel/Netlify (frontend) + Supabase/Neon (Postgres)</b></td><td>Lets you show a live, working link in your final presentation, not just local screenshots.</td></tr>
+</table>
+
+<div class="section-label cyan">Your step-by-step roadmap</div>
+<div class="roadmap">
+  <div class="road-step">
+    <span class="weeks">Phase 1 · Weeks 1–2</span>
+    <h3>Plan before you code</h3>
+    <p>Write down your exact database tables (Entity-Relationship diagram), sketch your screens on paper or in Figma, and write one clear sentence for what each of the 11 features must do. Skipping this step is the #1 reason student projects fall apart halfway through — 30 minutes of planning saves 5 hours of confused rewriting later.</p>
+  </div>
+  <div class="road-step">
+    <span class="weeks">Phase 2 · Weeks 3–4</span>
+    <h3>Build the foundation: registration, login, and the database</h3>
+    <p>Get a user able to sign up, log in, and see an empty dashboard before anything else. This proves your whole chain — frontend, backend, database — is actually connected correctly.</p>
+  </div>
+  <div class="road-step">
+    <span class="weeks">Phase 3 · Weeks 5–7</span>
+    <h3>Core marketplace loop: request → match → rank → book</h3>
+    <p>Build service request creation, nearby matching, and ranking together, since they naturally feed into each other. At this stage your app should already let a fake user "find and book" a fake provider end-to-end, even with rough styling.</p>
+  </div>
+  <div class="road-step">
+    <span class="weeks">Phase 4 · Weeks 8–9</span>
+    <h3>Real-time features: chat, live tracking, and the agent</h3>
+    <p>These are technically the hardest, so build them once your core loop already works — don't attempt everything at once. Get chat working first, then reuse that same WebSocket connection for tracking.</p>
+  </div>
+  <div class="road-step">
+    <span class="weeks">Phase 5 · Weeks 10–11</span>
+    <h3>Ratings, history, and the provider dashboard</h3>
+    <p>These features depend on there being some data already in your system, so build them after you have test bookings to actually display.</p>
+  </div>
+  <div class="road-step">
+    <span class="weeks">Phase 6 · Weeks 12–13</span>
+    <h3>Polish, test, evaluate your models, and write it all up</h3>
+    <p>This phase is where a "working app" becomes an "impressive final year project" — see the tips below for exactly what to focus on here.</p>
+  </div>
+</div>
+
+<div class="section-label cyan">How to make this project genuinely stand out</div>
+<div class="tips-grid">
+  <div class="tip-card"><span class="tip-icon">1</span>
+  <h4>Prove your models actually work</h4>
+  <p>Don't just say "I used a classifier." Report its accuracy, precision, and confusion matrix on a held-out test set. Numbers turn "I used ML" into "I evaluated ML" — that difference is exactly what separates an average project from an excellent one.</p></div>
+
+  <div class="tip-card"><span class="tip-icon">2</span>
+  <h4>Keep a clean, well-organized GitHub repo</h4>
+  <p>A clear README with setup instructions, screenshots, and an architecture diagram is often the very first thing a recruiter or evaluator looks at — before they even open your code.</p></div>
+
+  <div class="tip-card"><span class="tip-icon">3</span>
+  <h4>Deploy a live demo link</h4>
+  <p>Even a slightly slow free-tier deployment beats "you'll have to run it locally to see it work." Being able to hand someone a link changes how seriously they take your project.</p></div>
+
+  <div class="tip-card"><span class="tip-icon">4</span>
+  <h4>Write a short project report alongside the code</h4>
+  <p>Cover: the problem you're solving, why you chose each tool (you now have this whole document for that!), your system architecture, your model evaluation results, and what you'd improve with more time. This becomes your thesis document almost for free.</p></div>
+
+  <div class="tip-card"><span class="tip-icon">5</span>
+  <h4>Record a short demo video</h4>
+  <p>A 3–5 minute walkthrough of the whole app working end-to-end is incredibly persuasive in interviews and presentations, and it protects you if something breaks live during your defense.</p></div>
+
+  <div class="tip-card"><span class="tip-icon">6</span>
+  <h4>Test as you go, not at the end</h4>
+  <p>Use pytest for backend logic and Postman/Thunder Client to manually check your APIs as you build each feature — catching a bug the day you wrote it is far easier than catching it three features later.</p></div>
+
+  <div class="tip-card"><span class="tip-icon">7</span>
+  <h4>Start with an MVP, then layer on the "smart" parts</h4>
+  <p>Get a bare, ugly version of every feature working first, end-to-end. Only after that should you go back and add the ML ranking model, sentiment analysis, and polish. A fully working simple app beats a half-working fancy one, every time.</p></div>
+
+  <div class="tip-card"><span class="tip-icon">8</span>
+  <h4>Use a project board to track yourself</h4>
+  <p>A free Trello or Notion board with your 11 features broken into small tasks keeps you honest about progress and looks great if you show it during your viva as evidence of a structured process.</p></div>
+</div>
+
+<div class="closing">
+<p><b>One last thing, honestly:</b> you don't need to build all 11 features at their most advanced version to succeed. A working core (registration, request creation, matching, ranking, booking) with two or three features pushed to an impressive, evaluated, ML-backed level will beat a shallow attempt at all eleven. Pick your "showcase" features — I'd suggest the classifier in feature 02, the ranking model in feature 04, and the agent in feature 05 — and make those genuinely excellent.</p>
+<p>You've never built an app before, and that's completely fine — everyone's first real project feels overwhelming at the start. Follow the roadmap phase by phase, don't skip the planning week, and ask for help (from me, your advisor, or documentation) the moment you're stuck for more than an hour. That's not a weakness, that's exactly how real engineers work too.</p>
+</div>
+
+</section>
+
+</main>
+
+<footer>Ustaad G Project Blueprint · Built as a study reference for your final year project</footer>
+
+<script>
+document.querySelectorAll('nav.toc a').forEach(link=>{
+  link.addEventListener('click', function(e){
+    const id = this.getAttribute('href').slice(1);
+    const target = document.getElementById(id);
+    if(target && target.tagName.toLowerCase()==='details'){
+      target.setAttribute('open','');
+    }
+  });
+});
+</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+</body>
+</html>
