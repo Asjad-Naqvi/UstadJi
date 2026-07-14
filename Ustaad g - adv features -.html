@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>USTAAD G -- Advanced Features Detail</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0c1524;
+  --bg-panel:#111d31;
+  --bg-panel-2:#0f1a2c;
+  --grid-line: rgba(94,230,208,0.06);
+  --ink:#e7edf5;
+  --ink-dim:#93a3bd;
+  --ink-faint:#5c6c88;
+  --cyan:#5ee6d0;
+  --cyan-dim: rgba(94,230,208,0.14);
+  --blue:#5b9dff;
+  --amber:#f2b84b;
+  --amber-dim: rgba(242,184,75,0.12);
+  --violet:#b58cf0;
+  --violet-dim: rgba(181,140,240,0.12);
+  --rose:#f0708c;
+  --line: rgba(147,163,189,0.16);
+  --radius: 14px;
+}
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  margin:0;
+  background:
+    linear-gradient(var(--grid-line) 1px, transparent 1px) 0 0/42px 42px,
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px) 0 0/42px 42px,
+    var(--bg);
+  color:var(--ink);
+  font-family:'IBM Plex Sans', sans-serif;
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,h4{font-family:'Space Grotesk', sans-serif; margin:0; color:#fff;}
+code, .mono{font-family:'IBM Plex Mono', monospace;}
+a{color:var(--cyan);}
+
+/* ---------- Header ---------- */
+.hero{
+  padding: 64px 24px 40px;
+  max-width: 1180px;
+  margin: 0 auto;
+  position:relative;
+}
+.hero .kicker{
+  display:inline-flex; align-items:center; gap:8px;
+  font-family:'IBM Plex Mono', monospace;
+  font-size:12px; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--cyan); background:var(--cyan-dim);
+  border:1px solid rgba(94,230,208,0.35);
+  padding:6px 12px; border-radius:999px;
+}
+.hero h1{
+  font-size:clamp(34px, 5vw, 56px);
+  line-height:1.05;
+  margin:22px 0 14px;
+  max-width:14ch;
+}
+.hero h1 span{color:var(--cyan);}
+.hero p.lead{
+  max-width:64ch;
+  font-size:17px;
+  color:var(--ink-dim);
+}
+.hero-meta{
+  display:flex; flex-wrap:wrap; gap:14px;
+  margin-top:28px;
+}
+.hero-meta div{
+  border:1px solid var(--line);
+  background:var(--bg-panel);
+  border-radius:10px;
+  padding:10px 16px;
+  font-size:13px;
+  color:var(--ink-dim);
+}
+.hero-meta b{color:var(--ink); font-family:'IBM Plex Mono',monospace; font-weight:500;}
+
+/* ---------- Nav / TOC ---------- */
+.toc-wrap{
+  max-width:1180px; margin:0 auto; padding: 0 24px 10px;
+}
+.toc{
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(210px,1fr));
+  gap:10px;
+  background:var(--bg-panel);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px;
+}
+.toc a{
+  text-decoration:none;
+  color:var(--ink-dim);
+  font-size:13.5px;
+  display:flex; gap:10px; align-items:flex-start;
+  padding:8px 10px;
+  border-radius:8px;
+  transition:background .15s, color .15s;
+}
+.toc a:hover{background:rgba(94,230,208,0.08); color:var(--ink);}
+.toc a .n{
+  font-family:'IBM Plex Mono',monospace;
+  color:var(--cyan);
+  font-size:12px;
+  flex-shrink:0;
+  padding-top:1px;
+}
+
+/* ---------- Feature sections ---------- */
+main{max-width:1180px; margin:0 auto; padding: 30px 24px 60px;}
+
+.feature{
+  border:1px solid var(--line);
+  background:var(--bg-panel);
+  border-radius:var(--radius);
+  margin-bottom:18px;
+  overflow:hidden;
+  scroll-margin-top:20px;
+}
+.feature-head{
+  display:flex; align-items:center; gap:16px;
+  padding:20px 22px;
+  cursor:pointer;
+  user-select:none;
+}
+.feature-head .num{
+  font-family:'IBM Plex Mono',monospace;
+  color:var(--cyan);
+  font-size:13px;
+  border:1px solid rgba(94,230,208,0.35);
+  background:var(--cyan-dim);
+  border-radius:8px;
+  width:38px; height:38px;
+  display:flex; align-items:center; justify-content:center;
+  flex-shrink:0;
+}
+.feature-head h2{font-size:19px; flex:1; letter-spacing:-.01em;}
+.feature-head .tagline{
+  color:var(--ink-faint); font-size:12.5px; display:block; margin-top:3px; font-family:'IBM Plex Sans';
+  font-weight:400;
+}
+.chev{
+  color:var(--ink-faint);
+  transition:transform .2s;
+  flex-shrink:0;
+}
+.feature.open .chev{transform:rotate(180deg); color:var(--cyan);}
+.feature-body{
+  max-height:0;
+  overflow:hidden;
+  transition:max-height .35s ease;
+}
+.feature.open .feature-body{max-height:12000px;}
+.feature-body-inner{
+  padding: 4px 22px 28px;
+  border-top:1px solid var(--line);
+}
+
+.subhead{
+  display:flex; align-items:center; gap:9px;
+  margin:26px 0 12px;
+}
+.subhead .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.subhead h3{font-size:13px; text-transform:uppercase; letter-spacing:.09em; color:var(--ink-dim); font-family:'IBM Plex Mono',monospace; font-weight:500;}
+
+/* flow diagram */
+.flow{
+  display:flex; flex-wrap:wrap; align-items:center; gap:0;
+  background:var(--bg-panel-2);
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:20px 16px;
+}
+.flow-step{
+  background:#0a1220;
+  border:1px solid rgba(94,230,208,0.3);
+  border-radius:9px;
+  padding:11px 14px;
+  min-width:130px;
+  max-width:180px;
+  text-align:center;
+}
+.flow-step .t{font-size:12.5px; font-weight:600; color:var(--ink);}
+.flow-step .s{font-size:11px; color:var(--ink-faint); margin-top:3px;}
+.flow-arrow{
+  color:var(--cyan);
+  font-size:18px;
+  padding:0 10px;
+  flex-shrink:0;
+}
+@media(max-width:640px){
+  .flow{flex-direction:column;}
+  .flow-arrow{transform:rotate(90deg); padding:6px 0;}
+  .flow-step{max-width:100%; width:100%;}
+}
+
+/* tools */
+.tool-list{display:flex; flex-direction:column; gap:10px;}
+.tool{
+  border:1px solid var(--line);
+  border-left:3px solid var(--blue);
+  border-radius:8px;
+  padding:13px 16px;
+  background:var(--bg-panel-2);
+}
+.tool .name{font-family:'IBM Plex Mono',monospace; font-size:13.5px; color:#bcd4ff; font-weight:600;}
+.tool .desc{font-size:14px; color:var(--ink-dim); margin-top:5px;}
+
+/* plain lists (data sources) */
+ul.plain{margin:0; padding-left:20px; color:var(--ink-dim); font-size:14px;}
+ul.plain li{margin-bottom:6px;}
+ul.plain li::marker{color:var(--cyan);}
+
+/* alternatives */
+.alt{
+  border:1px solid var(--line);
+  border-left:3px solid var(--violet);
+  border-radius:8px;
+  padding:13px 16px;
+  background:var(--bg-panel-2);
+  margin-bottom:10px;
+}
+.alt .for{font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--violet); font-family:'IBM Plex Mono',monospace;}
+.alt .opts{font-size:14px; color:var(--ink-dim); margin:6px 0;}
+.alt .pick{
+  font-size:13.5px; color:#dcd0f7; margin-top:8px;
+  background:var(--violet-dim); border-radius:6px; padding:8px 10px;
+}
+.alt .pick b{color:var(--violet);}
+
+/* edge cases */
+.edge{
+  border:1px solid var(--line);
+  border-left:3px solid var(--amber);
+  border-radius:8px;
+  padding:13px 16px;
+  background:var(--bg-panel-2);
+  margin-bottom:10px;
+}
+.edge .case{font-size:13.5px; font-weight:600; color:var(--amber);}
+.edge .handle{font-size:14px; color:var(--ink-dim); margin-top:5px;}
+
+/* Guidance / teacher section */
+.teacher{
+  background: linear-gradient(180deg, rgba(94,230,208,0.05), transparent 40%), var(--bg-panel);
+  border:1px solid rgba(94,230,208,0.35);
+  border-radius:18px;
+  padding:36px 30px;
+  margin-top:36px;
+}
+.teacher h2{font-size:28px; margin-bottom:6px;}
+.teacher .sub{color:var(--ink-dim); font-size:14.5px; margin-bottom:26px;}
+.teacher h4{
+  color:var(--cyan); font-size:15px; margin:26px 0 10px;
+  font-family:'IBM Plex Mono',monospace; letter-spacing:.01em;
+}
+.teacher p, .teacher li{color:var(--ink-dim); font-size:15px;}
+.teacher ol, .teacher ul{padding-left:22px;}
+.teacher li{margin-bottom:8px;}
+.teacher li::marker{color:var(--cyan);}
+.teacher .callout{
+  border:1px solid rgba(242,184,75,0.4);
+  background:var(--amber-dim);
+  border-radius:10px;
+  padding:14px 18px;
+  margin:18px 0;
+  font-size:14.5px;
+  color:#f4d9a3;
+}
+.teacher .callout b{color:var(--amber);}
+
+footer{
+  text-align:center; padding:40px 24px 60px;
+  color:var(--ink-faint); font-size:13px;
+}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <span class="kicker">● Final Year Project — Data Science / AI Track</span>
+  <h1>Building <span>Ustaad G</span>, one feature at a time.</h1>
+  <p class="lead">This is your complete build map for the USTAAD G home-services app — a voice-first, AI-powered platform connecting users with service providers (electricians, plumbers, painters and more). For every feature you listed, you get a flow diagram, the exact tools to learn, where to get data, which tool is the smart pick, and the traps to watch for. Read it like a lab manual, not a spec sheet.</p>
+  <div class="hero-meta">
+    <div>Features covered: <b>14</b></div>
+    <div>Guiding rule: <b>free / local tools first, API only when nothing else works</b></div>
+    <div>Audience: <b>you, on day one of building your first app</b></div>
+  </div>
+</div>
+
+<div class="toc-wrap">
+  <nav class="toc" id="toc"></nav>
+</div>
+
+<main id="features"></main>
+
+<div style="max-width:1180px;margin:0 auto;padding:0 24px 80px;">
+<div class="teacher">
+  <h2>Now let's talk about actually finishing this well.</h2>
+  <div class="sub">Sit back for a second — this part is the difference between a project that gets a passing grade and one a company remembers.</div>
+
+  <h4>1. Don't build all 14 features. Build 4, brilliantly.</h4>
+  <p>I know the feature list is exciting — it reads like a real startup pitch. But you are one student with one semester (maybe two). If you try to build all 14, you'll end up with 14 things that half-work, and in your defense, a panel member will click one button, watch it fail, and that's the memory they leave with. Instead, pick a "core loop" of 4–5 features that tell one complete story end-to-end: for example — <b>(1) Voice-powered search in Urdu/English/Roman Urdu → (2) Multimodal Damage Assessment → (3) Smart Dynamic Pricing → (4) Proof-of-Work Verification → (5) Fake Review Detection</b>. That's a full journey: a user speaks a problem, uploads a photo, gets a fair price, gets verified work, and leaves a trustworthy review. Build the rest as "designed but not implemented" — show the diagrams and architecture in your report, and say clearly "this is planned for the next phase." Examiners respect honesty about scope far more than a pile of half-broken features.</p>
+
+  <div class="callout"><b>Why this matters to companies:</b> A recruiter or FYP judge does not measure you by feature count. They measure you by whether what you built actually runs, whether you can explain every decision behind it, and whether the code is clean enough that another engineer could pick it up. Four working, well-explained features beat fourteen fragile ones, every time.</div>
+
+  <h4>2. The order you should learn things in (since you've never built an app before)</h4>
+  <ol>
+    <li><b>Python fundamentals</b> — if you're not already comfortable, spend 1–2 weeks here. Everything downstream depends on this.</li>
+    <li><b>Data handling</b> — Pandas and NumPy. You'll use these constantly to clean and shape data before any model sees it.</li>
+    <li><b>Classical Machine Learning</b> — Scikit-learn (regression, classification, clustering, Isolation Forest). Most of your "smart" features (pricing, badges, anomaly detection) use this, not deep learning — and that's fine. Simpler models that you understand deeply are more impressive than complex ones you can't explain.</li>
+    <li><b>One deep learning framework</b> — PyTorch is the current industry standard (companies hire for PyTorch far more than TensorFlow now). You'll need it for vision (damage assessment, proof-of-work) and voice (speech-to-text, translation).</li>
+    <li><b>APIs and backend</b> — Learn FastAPI (Python). It is the modern standard for serving ML models as web services, and it's what real companies use today, not Flask.</li>
+    <li><b>A simple frontend/app shell</b> — you don't need to be a frontend expert. Use Flutter (one codebase for Android + iOS) or React Native. If time is short, even a working web app (React or plain HTML/JS) that "acts like an app" is acceptable for an FYP — the AI/data-science work is what's being graded.</li>
+    <li><b>Database</b> — PostgreSQL. Learn basic schema design: users, providers, bookings, reviews, service_tickets.</li>
+    <li><b>Deployment basics</b> — Docker (so your project runs the same on any machine, including the judges'), and a free-tier host (Render, Railway, or Hugging Face Spaces for your ML models).</li>
+  </ol>
+
+  <h4>3. Treat this like real data science, not "vibe coding"</h4>
+  <p>For every model you build, follow the same loop every time: <b>define the question → collect/simulate data → clean it → explore it (EDA, with real charts) → try a simple baseline model first → try a better model → measure it properly with the right metric → write down why it works or doesn't.</b> Keep every one of these steps visible in a Jupyter notebook per feature. This notebook, more than the final app, is often what convinces a technical judge you actually understand data science — not just that you copy-pasted a tutorial.</p>
+
+  <h4>4. Data is your biggest real obstacle — plan for it early</h4>
+  <p>You don't have real user data yet (no app has users on day one). Don't let this block you. Use this order of preference: <b>(1)</b> small amounts of real self-collected data (record your own voice, photograph appliances in your house, ask 5–10 friends to help), <b>(2)</b> public datasets that are close enough to adapt (Kaggle, Mozilla Common Voice, COCO), <b>(3)</b> carefully simulated/synthetic data that follows realistic rules (for bookings, pricing, fraud patterns). Always tell the judges exactly which data is real and which is synthetic — this honesty is expected and respected in data science, not penalized.</p>
+
+  <h4>5. Keep the API rule you set for yourself — it's a good one</h4>
+  <p>Sticking to free/local/open-source tools wherever possible is exactly the right instinct. It forces you to actually understand the tool instead of just calling someone else's endpoint, it means your project runs even without internet or a paid key during your defense, and it is genuinely more impressive to a company — anyone can wire up an API key, but fine-tuning a model or writing your own detection logic shows real skill. Reserve API calls only for the handful of places in this document marked as "API needed" — those are the places where building it yourself would take months a student doesn't have (like production-grade Urdu translation at scale).</p>
+
+  <h4>6. Version control and documentation from day one</h4>
+  <ul>
+    <li>Put your project on GitHub from the very first line of code — not at the end. Commit often, with clear messages ("add pricing regression model", not "update").</li>
+    <li>Write a README for every module explaining what it does, how to run it, and what it needs.</li>
+    <li>Keep a short weekly log (even 3 sentences) of what you tried, what worked, what didn't. This becomes gold when you write your final report and when you're asked "why did you choose X over Y" in your defense — you'll have the real answer, not a guess.</li>
+  </ul>
+
+  <h4>7. Think about privacy — this app touches sensitive personal data</h4>
+  <p>Voice recordings, home photos, and location data are personal and sometimes sensitive. Even for an FYP demo, show that you've thought about this: mention in your report that recordings/photos would be stored securely, access-controlled, and deletable by the user on request. You don't need a full legal framework — just showing awareness of this is something judges and companies specifically look for now, especially with AI products.</p>
+
+  <h4>8. How to demo it so it lands</h4>
+  <ul>
+    <li>Prepare one clean, rehearsed end-to-end demo video (5–7 minutes) as a backup — live demos fail, especially with voice/network involved.</li>
+    <li>Show the model's mistakes too, briefly, and explain how you'd fix them. This signals maturity far more than pretending everything works perfectly.</li>
+    <li>Have one slide per feature with the flow diagram (you already have these in this document) — it makes your defense far easier to follow.</li>
+  </ul>
+
+  <h4>9. The one habit that will make the biggest difference</h4>
+  <p>Build the smallest possible working version of a feature first — even if it's ugly — before making it smart. A pricing feature that just adds up hardcoded numbers, working end-to-end today, is more valuable than a beautiful regression model that isn't connected to anything yet. Get the pipe connected first, then make the water cleaner. This single habit is what separates finished student projects from abandoned ones.</p>
+
+</div>
+</div>
+
+<footer>Built as a study companion for your FYP. Update the tool choices as you learn — the "best" tool is always the one you can explain confidently in your defense.</footer>
+
+<script>
+const FEATURES = [
+{
+  title:"Voice-Powered Everything (Urdu / English / Roman Urdu)",
+  tagline:"Speak instead of type, with live translation between user and provider",
+  flow:[
+    ["User speaks","mic input"],
+    ["Speech-to-Text","Whisper"],
+    ["Language ID","detect Ur/En/Roman"],
+    ["Translate (if needed)","NLLB / MarianMT"],
+    ["Intent understanding","NLP / NLU"],
+    ["Action executed","search, book, feedback"],
+    ["Text-to-Speech reply","voice back to user"]
+  ],
+  tools:[
+    ["Whisper (OpenAI, open-source)","Converts spoken audio into text. Use it because it runs free on your own laptop/GPU (or free Colab GPU), works surprisingly well on Urdu, and needs no API key. This is the entry point of the whole voice pipeline — every voice feature in your app depends on it."],
+    ["fastText / langdetect","A tiny free library that looks at text and guesses which language it's in (Urdu script, English, or Roman Urdu). You need this right after transcription so the app knows whether translation is required."],
+    ["NLLB-200 or MarianMT (Hugging Face)","Free, open-source translation models that convert between Urdu and English. Use this when the user speaks one language and the provider prefers another — this is what makes the 'real-time translation' feature real rather than a marketing line."],
+    ["Roman Urdu normalizer (rule-based dictionary you build)","Roman Urdu has no fixed spelling (‘kesy’, ‘kaisay’, ‘kaise’ all mean the same thing). You build a small lookup table/rules to map common variants to one standard form before feeding text to any model — this single piece massively improves accuracy for Pakistani users."],
+    ["spaCy or Rasa NLU","Figures out what the user actually wants from the transcribed sentence (‘book a plumber for tomorrow’ = intent: booking, entity: plumber, tomorrow). Free and runs locally, no cloud dependency."],
+    ["Coqui TTS / Meta MMS-TTS","Converts the app's text reply back into spoken audio, including Urdu voices. Free and open-source, so your assistant can literally talk back without paying per request."]
+  ],
+  data:[
+    "Mozilla Common Voice — free public dataset with Urdu voice recordings, good for testing your Whisper pipeline.",
+    "Record your own small dataset — 30–60 minutes of you and 5–10 friends/family speaking common app phrases in Urdu, English, and Roman Urdu. This is the single most valuable dataset you'll own, because it matches your actual use-case.",
+    "CLE (Center for Language Engineering, Pakistan) — public Urdu language resources and corpora, useful for text-side language modelling.",
+    "Roman-Urdu-Parl or similar open Roman Urdu corpora on GitHub/Kaggle for building your normalization dictionary."
+  ],
+  alts:[
+    ["Speech-to-Text","Whisper (free, local) vs Google Speech-to-Text API vs Azure Speech","<b>Best pick: Whisper.</b> It's free, works offline, and handles Urdu respectably — exactly what a student project needs. Mention cloud APIs in your report as the 'production scaling' option, since real companies do sometimes pay for lower latency at large scale — showing you know this trade-off is itself impressive."],
+    ["Translation","NLLB-200 (free, open-source) vs Google Translate API (paid, cloud)","<b>Best pick: NLLB-200.</b> It keeps you API-independent and is genuinely one of the best open translation models available today. Use Google Translate only as a documented fallback/comparison in your evaluation, not as your main pipeline."],
+    ["Text-to-Speech","Coqui/MMS-TTS (free) vs ElevenLabs / Google TTS (paid API)","<b>Best pick: MMS-TTS.</b> Free, supports many languages including Urdu, and keeps the whole loop local — important since your rule is 'no API unless unavoidable'."]
+  ],
+  edges:[
+    ["Background noise or a bad microphone","Run a free noise-reduction step (e.g. the RNNoise library) before Whisper sees the audio, and reject/re-ask if confidence is too low."],
+    ["User mixes Urdu and English in one sentence (very common in Pakistan)","Use a multilingual model rather than switching models mid-sentence, and don't force a single 'detected language' — allow code-mixed handling."],
+    ["Roman Urdu spelling varies wildly","Keep growing your normalization dictionary as you test with real users; treat this as a living file, not a one-time task."],
+    ["No speech detected / total silence","Always give a visible typing fallback — never trap the user in a voice-only dead end."]
+  ]
+},
+{
+  title:"Home Renovation Planning",
+  tagline:"User describes a renovation → app estimates budget, professionals needed, and a plan",
+  flow:[
+    ["User describes project","text or voice"],
+    ["Requirement extraction","NLP entities"],
+    ["Budget estimation model","regression"],
+    ["Professional matcher","which trades needed"],
+    ["Plan/timeline generator","step-by-step"],
+    ["Shown to user","editable plan"]
+  ],
+  tools:[
+    ["spaCy (Named Entity Recognition)","Pulls out the useful pieces from a free-text description — room type, size, materials mentioned, urgency — so the rest of the pipeline has structured data to work with instead of raw sentences."],
+    ["Scikit-learn regression model","Learns to estimate a budget range from features like room size, material quality, and city — trained on whatever pricing data you collect. Start simple (linear/random forest regression) before anything fancier."],
+    ["A small rule-based recommendation engine","Maps the extracted requirements to a list of needed trades (e.g. ‘kitchen remodel’ → electrician + plumber + carpenter + painter). This doesn't need machine learning — a clean lookup table is the right tool here."],
+    ["A local open-source LLM via Ollama (e.g. Llama 3 8B)","Turns your structured plan (trades needed, order, rough timing) into a friendly, readable renovation plan for the user. Runs free on your own machine — no API cost, and it's optional polish, not core logic."]
+  ],
+  data:[
+    "Run a small survey with 10–15 local contractors/tradespeople for realistic labour and material price ranges in your city.",
+    "Scrape publicly listed classified ads (e.g. OLX Pakistan service listings) for rough real-world service pricing.",
+    "Publicly available renovation cost guides (many home-improvement sites publish general cost ranges) to sanity-check your numbers.",
+    "Generate synthetic training rows once you understand realistic ranges, clearly labelled as synthetic in your report."
+  ],
+  alts:[
+    ["Requirement extraction","spaCy vs NLTK vs a Hugging Face transformer model","<b>Best pick: spaCy.</b> Fast, production-grade, and companies actively use it in real NLP pipelines — a strong resume line."],
+    ["Plan text generation","Local LLM (Ollama/Llama) vs OpenAI API","<b>Best pick: local LLM.</b> Free, keeps you API-independent, and still demonstrates you can work with modern LLMs. Mention the API route only as a 'if scaling to production' note."]
+  ],
+  edges:[
+    ["Vague descriptions (‘fix my kitchen’)","Ask 2–3 clarifying follow-up questions instead of guessing — a short multi-turn conversation beats a wrong estimate."],
+    ["Unrealistic budget expectations from the user","Always show a price range, never a single exact number, and explain what drives the low vs high end."],
+    ["Prices vary a lot by city/area","Add a location multiplier to your budget model rather than one flat national price."]
+  ]
+},
+{
+  title:"Predictive Maintenance",
+  tagline:"Reminds users before an appliance is likely to break down",
+  flow:[
+    ["Service history data","past bookings"],
+    ["Feature engineering","time since service, usage"],
+    ["Survival/regression model","predicts next likely service"],
+    ["Predicted date","risk score"],
+    ["Reminder triggered","notification to user"]
+  ],
+  tools:[
+    ["Pandas","Cleans and reshapes your booking history into a table the model can learn from — one row per appliance per user, with time-since-last-service as a key feature."],
+    ["lifelines (Python survival analysis library)","A free library built exactly for ‘how long until an event happens’ problems — which is precisely what predictive maintenance is. Using this instead of a plain regression is a genuine data-science technique that will stand out to reviewers."],
+    ["Scikit-learn (as a simpler baseline)","A basic regression model to predict days-until-next-service when you don't have enough data yet for survival analysis — good as your first working version."]
+  ],
+  data:[
+    "Simulate realistic maintenance cycles yourself (e.g. water heaters every ~12 months, ACs before summer) based on manufacturer guidelines — clearly labelled synthetic data.",
+    "Manufacturer-published recommended service intervals (publicly available in appliance manuals/websites).",
+    "Your own platform's booking history once the app has real users — this becomes your best data over time."
+  ],
+  alts:[
+    ["Modelling technique","lifelines survival analysis vs plain regression vs asking an LLM to 'reason' about it","<b>Best pick: lifelines.</b> It's the technically correct tool for this exact type of problem (time-to-event data), and naming ‘survival analysis’ in your report signals real statistical maturity — companies notice this."]
+  ],
+  edges:[
+    ["Brand-new user with no service history","Fall back to manufacturer default intervals until enough real data accumulates (cold start)."],
+    ["Inconsistent or missing logging","Use simple imputation (fill gaps with typical values) rather than dropping the user's whole record."],
+    ["User replaced the appliance but didn't update the app","Let users manually reset/edit an appliance's history — always give a human override for a prediction system."]
+  ]
+},
+{
+  title:"Multimodal Damage Assessment",
+  tagline:"User uploads a photo/video → app identifies the appliance and the issue automatically",
+  flow:[
+    ["Photo/video upload","from user"],
+    ["Preprocessing","resize, denoise, keyframes"],
+    ["Vision model analysis","brand/model/issue"],
+    ["OCR on labels","serial/model number"],
+    ["Data appended to ticket","technician sees it"]
+  ],
+  tools:[
+    ["OpenCV","Free image-processing library used to resize, sharpen, and pull clear keyframes out of a shaky video before any AI model looks at it — good preprocessing massively improves model accuracy."],
+    ["LLaVA or Qwen-VL (open-source Vision-Language Models, via Hugging Face)","These can look at a photo and describe what's wrong in plain language, similar to GPT-4o Vision but free to run yourself. This is the core ‘brain’ of the damage assessment feature."],
+    ["Tesseract OCR","Free text-reading tool that reads brand/model/serial numbers directly off appliance stickers in the photo, so the technician knows exactly what part to bring."]
+  ],
+  data:[
+    "Photograph appliances around your own home and ask friends/family to send a few photos of theirs — the fastest way to a real starter dataset.",
+    "Kaggle has several public household-appliance image datasets you can use to pretrain or test your classifier.",
+    "Search-and-collect a small set of publicly available appliance brand/logo images for the OCR/brand-recognition step."
+  ],
+  alts:[
+    ["Vision reasoning model","Open-source LLaVA/Qwen-VL (free, local) vs GPT-4o Vision / Claude Vision API (paid)","<b>Best pick: open-source LLaVA for your core build.</b> It keeps the feature API-independent and demonstrates you can run real multimodal models. Note in your report that a Vision API could be swapped in for higher accuracy at scale — showing you understand the trade-off is worth real marks."]
+  ],
+  edges:[
+    ["Blurry or badly lit photo","Add an automatic quality check that asks the user to reupload before it reaches the model."],
+    ["No visible brand label in the photo","Fall back to a manual dropdown where the user selects the appliance type themselves."],
+    ["Very long video upload","Only extract a handful of clear keyframes instead of processing the whole video — keeps it fast and cheap to run."]
+  ]
+},
+{
+  title:"Autonomous Profile Optimization Agent",
+  tagline:"Reviews a provider's performance and proactively suggests profile improvements",
+  flow:[
+    ["Provider stats gathered","reviews, completion rate"],
+    ["Pattern detection","clustering/rules"],
+    ["Suggestion generated","specialty, pricing tip"],
+    ["Delivered as a chat message","to provider"],
+    ["Provider approves","profile updated"]
+  ],
+  tools:[
+    ["Pandas / SQL aggregation","Rolls up a provider's raw booking and review rows into summary stats (average rating per service type, completion rate) — the foundation for any suggestion."],
+    ["K-means clustering (Scikit-learn)","Groups providers into natural 'specialty clusters' based on what they're actually good at, purely from their data — a genuine unsupervised-learning technique that's more impressive than a plain if-statement."],
+    ["A simple rule engine + message templates","Turns the detected pattern into a friendly suggestion message without needing an LLM API call — keeps this feature fully free to run."],
+    ["APScheduler (Python)","Runs this analysis automatically on a schedule (e.g. weekly) in the background, which is what makes the agent 'autonomous' rather than something you trigger by hand."]
+  ],
+  data:[
+    "Your platform's own review and booking data, once it starts generating some.",
+    "For your demo/defense, generate a small synthetic set of provider histories (ratings, completed jobs, service types) that mimics realistic patterns."
+  ],
+  alts:[
+    ["Pattern detection","Rule-based thresholds vs K-means clustering vs calling an LLM API to 'decide'","<b>Best pick: combine rules for the MVP demo + K-means as your 'advanced' layer.</b> This shows both a working baseline and genuine ML skill, without needing any paid API."]
+  ],
+  edges:[
+    ["New provider with very little data","Skip suggestions until they've completed a minimum number of jobs (e.g. 5) — bad advice from thin data is worse than no advice."],
+    ["Conflicting signals (high ratings but low completion rate)","Weight completion rate and rating separately rather than averaging them into one number that hides the problem."],
+    ["Provider keeps ignoring suggestions","Reduce how often you nudge them — don't turn a helpful agent into a nagging one."]
+  ]
+},
+{
+  title:"Proof-of-Work Verification",
+  tagline:"Before/after photo check that must pass before a provider gets paid",
+  flow:[
+    ["Before photo","captured at booking"],
+    ["After photo","captured at completion"],
+    ["Object/mess detection","YOLOv8"],
+    ["Vision-LLM judgement","pass or flag"],
+    ["Escrow released","if passed"]
+  ],
+  tools:[
+    ["YOLOv8 (Ultralytics, open-source)","A free, fast object-detection model you can fine-tune to spot leftover tools, debris, or wet flooring in the ‘after’ photo. This is a genuinely resume-worthy skill (fine-tuning object detection) and stays completely free and local."],
+    ["OpenCV (SSIM comparison)","Compares the before and after photos structurally to check the same area/angle was actually photographed, catching lazy or fake submissions."],
+    ["An open-source Vision-LLM (LLaVA) for the final written judgement","Gives a short natural-language explanation of what looks wrong, e.g. 'debris still visible near the sink' — this is the part where a Vision API (GPT-4o/Claude) could be swapped in later for higher accuracy, but isn't required to make the feature work."]
+  ],
+  data:[
+    "Stage your own before/after photo pairs at home — e.g. deliberately leave tools out in some 'after' shots and clean ones in others, to build a small labelled test set.",
+    "COCO dataset (public, free) has general object classes you can fine-tune from for tool/debris detection.",
+    "Ask friends doing small home tasks to send you real before/after pairs."
+  ],
+  alts:[
+    ["Object/mess detection","YOLOv8 (free, local, fine-tunable) vs a full Vision API doing everything","<b>Best pick: YOLOv8</b> for detection, reserving a Vision-LLM call only for the final summary text if you want that polish. This split keeps 90% of the pipeline API-free while still producing a natural-language verdict."]
+  ],
+  edges:[
+    ["Before/after photos taken from different angles or lighting","Normalize/align images before comparing, and don't penalize lighting differences as 'mess'."],
+    ["Genuinely ambiguous case (model isn't confident)","Route it to a human moderator queue rather than auto-approving or auto-rejecting."],
+    ["Provider tries to game it with old or unrelated photos","Check photo timestamp/EXIF metadata and, if available, GPS location against the booking address."]
+  ]
+},
+{
+  title:"Smart Dynamic Pricing Engine",
+  tagline:"Provider explains the job by voice → app extracts details and builds a fair bill",
+  flow:[
+    ["Provider voice note","explains work done"],
+    ["Speech-to-Text","Whisper"],
+    ["Feature extraction","parts, time, materials"],
+    ["Missing-info check","clarifying question"],
+    ["Price calculation","rule + regression"],
+    ["Bill + e-signature","user confirms"]
+  ],
+  tools:[
+    ["Whisper (reused from Feature 1)","Transcribes the provider's spoken explanation of the completed work into text."],
+    ["A custom spaCy NER model","Trained specifically to pull out price-relevant entities from that transcript — part names, quantities, time spent — so the pricing engine has structured numbers to work with."],
+    ["A transparent rule-based pricing formula, refined by a regression layer","Start with a clear formula (labour rate × time + parts cost) so pricing is explainable to the user — critical for trust in billing — then let a regression model gently adjust for market conditions once you have data."],
+    ["signature_pad (free JavaScript library)","Lets the user draw a digital signature on-screen with their finger/mouse to confirm the bill, stored as an image tied to the transaction record."]
+  ],
+  data:[
+    "Build your own price list by surveying local part and labour costs for common services (plumbing, electrical, painting).",
+    "Publicly available appliance parts price lists from retailer websites.",
+    "Generate synthetic provider voice transcripts for training/testing your NER model before you have real ones."
+  ],
+  alts:[
+    ["Entity extraction from transcript","Custom spaCy model (free, explainable) vs asking a general LLM to extract fields","<b>Best pick: spaCy.</b> It's fast, doesn't need an API call for every single transcript, and you can show exactly why it extracted what it did — important when the output determines someone's bill."],
+    ["Pricing logic","Rule-based (transparent) vs a black-box ML model","<b>Best pick: rule-based core + light ML adjustment.</b> Full black-box pricing is actually a bad choice here — users and providers need to trust and understand their bill, and transparency is the more sophisticated engineering decision, not a lesser one."]
+  ],
+  edges:[
+    ["Unclear or mumbled audio","Set a confidence threshold — below it, automatically ask the provider a short clarifying question instead of guessing the price."],
+    ["User disputes the final price","Build a simple dispute flow that routes to human review rather than forcing acceptance."],
+    ["Same part name mentioned twice with different meanings","Prompt a quick disambiguation question rather than silently picking one."]
+  ]
+},
+{
+  title:"Peak Hours Prediction & Live Heatmap",
+  tagline:"Forecasts demand by area/time so solo providers know where to go",
+  flow:[
+    ["Historical booking data","time, location, service"],
+    ["Time-series features","hour, day, area"],
+    ["Forecasting model","Prophet"],
+    ["Geo-binning","H3 hex grid"],
+    ["Live heatmap rendered","to provider's app"]
+  ],
+  tools:[
+    ["Facebook Prophet (open-source)","A forecasting library made exactly for this kind of problem — predicting demand over time with daily/weekly patterns. It's easier to interpret than deep learning alternatives, which matters when you need to explain your results clearly in your defense."],
+    ["H3 (Uber's open-source hexagonal grid library)","Splits the map into equal hexagon cells so you can count bookings per area cleanly. This is the exact library real ride-hailing and delivery companies use for this kind of heatmap — using it yourself is a strong, specific signal of industry awareness."],
+    ["Leaflet.js + OpenStreetMap","A completely free, open-source map library to actually draw the heatmap on screen, with no API key and no usage cost, unlike Google Maps at scale."]
+  ],
+  data:[
+    "Generate synthetic booking data with realistic time-of-day and area patterns for your demo (e.g. more electrical requests in evenings, more plumbing after storms).",
+    "Public city population-density or ward-boundary data (often available from local government open-data portals) to seed your initial heatmap before you have real bookings.",
+    "Your own platform's booking data as the app grows — this replaces the synthetic data over time."
+  ],
+  alts:[
+    ["Forecasting model","Prophet vs ARIMA vs an LSTM neural network","<b>Best pick: Prophet</b> for your core submission — interpretable, well-documented, genuinely used by companies for demand forecasting. Mention LSTM as a 'future improvement' in your report if you want to show awareness of deep learning approaches without over-scoping your timeline."],
+    ["Map rendering","Leaflet + OpenStreetMap (free) vs Google Maps API (paid at scale)","<b>Best pick: Leaflet.</b> No API key needed, no cost ceiling to worry about during your defense, and it looks just as professional."]
+  ],
+  edges:[
+    ["A new area with no booking history yet (cold start)","Fall back to city-wide average demand patterns until that area builds up its own data."],
+    ["Sudden demand spikes (bad weather, local event)","Flag these as anomalies rather than letting them permanently skew the forecast model."],
+    ["A provider ignores the heatmap entirely","That's fine — keep it purely informational, never force provider movement."]
+  ]
+},
+{
+  title:"Fake Review Detection System",
+  tagline:"Catches reviews where the star rating doesn't match what was actually written",
+  flow:[
+    ["New review submitted","text + star rating"],
+    ["Sentiment analysis","on review text"],
+    ["Compare vs star rating","mismatch check"],
+    ["Flag if inconsistent","low confidence = flag"],
+    ["Sent to verification queue","human or automated"]
+  ],
+  tools:[
+    ["A pretrained sentiment model (Hugging Face, e.g. DistilBERT fine-tuned for sentiment)","Reads the review text and scores it as positive, negative, or neutral — free to download and run, no training needed to get started."],
+    ["A simple rule for mismatch detection (if rating is high but sentiment is negative → flag)","This one rule alone catches most obvious fake/inconsistent reviews and is fully explainable — a great example of not over-engineering a problem that doesn't need deep learning."],
+    ["A basic Urdu/Roman-Urdu sentiment lexicon (small open list of positive/negative words)","Since many reviews will be in Urdu or Roman Urdu, you need at least a lightweight lexicon-based check alongside (or as input to) the English sentiment model, translating first if needed."]
+  ],
+  data:[
+    "Publicly available Amazon/Yelp review datasets (Kaggle) — good for testing your English sentiment logic even though the domain is different.",
+    "Manually label a small set of your own test reviews (write 30–50 reviews yourself, some deliberately mismatched) to sanity-check your flagging logic.",
+    "Small open Urdu sentiment lexicons available on GitHub for the Urdu/Roman Urdu side."
+  ],
+  alts:[
+    ["Detection approach","Rule-based mismatch + sentiment model (simple, explainable) vs training a full custom fake-review classifier","<b>Best pick: start with rule + sentiment model</b> since you won't have enough real labelled fake-review data early on. Mention a full classifier as a stretch goal once real platform data exists — this shows you understand the realistic data-availability constraints of a student project, which is a mature answer in a defense."]
+  ],
+  edges:[
+    ["Sarcasm (‘amazing, absolutely terrible service’ with 5 stars)","Very hard to catch reliably — log it as a low-confidence flag for human review rather than trying to force an automatic decision."],
+    ["Reviews mixing languages","Translate to a single language before scoring sentiment, don't try to score mixed text directly."],
+    ["A genuinely harsh but honest review","Never auto-delete — always keep a human in the loop before any review is removed."]
+  ]
+},
+{
+  title:"Anomaly Detection for Fraud Prevention",
+  tagline:"Spots suspicious booking/review patterns automatically",
+  flow:[
+    ["Activity stream","bookings, cancellations, reviews"],
+    ["Feature extraction","frequency, patterns"],
+    ["Anomaly model","Isolation Forest"],
+    ["Risk score","+ collusion graph check"],
+    ["Auto-flag / suspend","admin alerted"]
+  ],
+  tools:[
+    ["Isolation Forest (Scikit-learn)","An unsupervised anomaly-detection algorithm that doesn't need labelled fraud examples to work — which matters a lot, because you genuinely won't have real fraud data early on. It's also the industry-standard first choice for this kind of problem."],
+    ["NetworkX (graph analysis library)","Lets you model users and providers as a network and detect suspicious clusters — for example, a small group of accounts that only ever review each other. This is a strong, specific technique that goes beyond the obvious and tends to impress technical reviewers."],
+    ["Simple statistical thresholds (z-score) as your baseline","A very easy first pass — e.g. flag anyone whose cancellation rate is far above the platform average — good to build and test before adding the heavier Isolation Forest model."]
+  ],
+  data:[
+    "Simulate fraud patterns yourself: write a script that generates normal-looking activity plus a small number of deliberately suspicious patterns (rapid booking-cancel cycles, review rings) — clearly labelled as synthetic.",
+    "General fraud-detection datasets on Kaggle (e.g. credit card fraud) — not domain-matched, but useful to practice the modelling technique itself."
+  ],
+  alts:[
+    ["Core anomaly model","Isolation Forest vs One-Class SVM vs a full Autoencoder neural network","<b>Best pick: Isolation Forest.</b> It's fast, works well on the kind of tabular behavioural data you'll have (counts, rates, timings), and is what real fraud teams reach for first — a safe, well-justified, and genuinely correct choice for this project size."]
+  ],
+  edges:[
+    ["A genuine power-user gets flagged just for being very active","Give flagged accounts an appeal path, and allow admins to whitelist known-good accounts rather than auto-banning."],
+    ["Fraud patterns change over time","Plan to retrain the model periodically rather than treating it as a one-time build."],
+    ["False positives suspending real accounts","Always soft-flag first (limit some actions) and require human review before a full suspension."]
+  ]
+},
+{
+  title:"Smart Rescheduling & Auto-Reminders",
+  tagline:"Automatically offers new time slots after a cancellation and reminds both sides before a booking",
+  flow:[
+    ["Booking cancelled","by user or provider"],
+    ["Find alternative slots","match both calendars"],
+    ["Suggest to both parties","pick a new time"],
+    ["Confirmed","booking updated"],
+    ["Reminders sent","24h / 1h / 15min"]
+  ],
+  tools:[
+    ["A rule-based slot-matching algorithm","Compares the provider's available calendar slots against the user's stated preferences to suggest realistic new times — plain logic, no ML needed here."],
+    ["Celery + Redis (task queue)","Handles the timed reminders (24 hours, 1 hour, 15 minutes before) reliably in the background, even while the rest of the app is busy. This is the same kind of infrastructure real companies use for scheduled notifications, so learning it is a genuine, transferable skill."],
+    ["Firebase Cloud Messaging (free tier)","Delivers the actual push notification to the user's and provider's phones without needing a paid SMS service."]
+  ],
+  data:["No external dataset needed — this feature runs entirely on your platform's own live calendar and booking data."],
+  alts:[
+    ["Background scheduling","APScheduler (simpler, good enough for a demo) vs Celery + Redis (production-grade)","<b>Best pick: learn Celery + Redis if you have time.</b> It's more setup work, but it's what real backend systems use for exactly this kind of job, and it's a strong, specific thing to say in an interview: 'I built a Celery-based reminder system.' If time is tight, APScheduler is a completely acceptable fallback — just be honest about the trade-off in your report."]
+  ],
+  edges:[
+    ["Neither party is free for any of the suggested new slots","Escalate to a manual slot-picker UI instead of looping suggestions forever."],
+    ["A reminder is scheduled but the booking gets cancelled afterward","Tie every reminder to the current booking status so cancelled bookings don't still send reminders."],
+    ["Users in different time zones (less common locally, but good practice)","Store all times in UTC internally and only convert for display."]
+  ]
+},
+{
+  title:"Dynamic Scheduling Calendar for Providers",
+  tagline:"Providers set availability; users only ever see truly free slots",
+  flow:[
+    ["Provider sets availability","free / busy / leave"],
+    ["Stored in database","time-slot table"],
+    ["User requests booking","picks a time"],
+    ["System checks availability","conflict check"],
+    ["Slot locked","booking confirmed"]
+  ],
+  tools:[
+    ["FullCalendar.js (free, open-source)","A ready-made, professional-looking calendar UI component you drop into your app instead of building one from scratch — this alone saves weeks of frontend work and looks polished immediately."],
+    ["A time-slot table in your database (PostgreSQL)","A simple schema — provider_id, start_time, end_time, status — is enough; the 'intelligence' here is really just clean database design and correct conflict-checking, not machine learning."],
+    ["Database transactions/row locking","Prevents two users from booking the exact same slot at the same moment — a small but important detail that shows you understand real concurrency issues, not just the happy path."]
+  ],
+  data:["No external dataset needed — purely generated by the app itself as providers and users interact with it."],
+  alts:[
+    ["Calendar UI","FullCalendar.js (free, mature, widely used) vs building a custom calendar from scratch","<b>Best pick: FullCalendar.js.</b> Real companies use libraries like this rather than reinventing calendar UI — using it shows good engineering judgement (not wasting time reinventing a solved problem), which is exactly what you want a company reviewer to notice."]
+  ],
+  edges:[
+    ["Two users try to book the same slot at the same time (race condition)","Use a database transaction/lock so only one booking can succeed — this is a classic, important edge case to mention explicitly in your report."],
+    ["Provider removes their availability after a slot is already booked","Never silently cancel an existing booking — protect already-confirmed slots from later availability changes."],
+    ["Provider wants the same weekly schedule every week","Support a simple 'repeat every week' template instead of forcing manual entry every time."]
+  ]
+},
+{
+  title:"Badges for User Loyalty & Provider Credibility",
+  tagline:"Simple, transparent recognition system based on activity and ratings",
+  flow:[
+    ["Activity/rating event","booking or review completed"],
+    ["Badge rule engine","checks thresholds"],
+    ["Badge awarded","if criteria met"],
+    ["Shown on profile","visible to others"]
+  ],
+  tools:[
+    ["A simple rule-based engine (plain if/else logic, stored in your database)","Checks conditions like 'more than 10 bookings and average rating above 4.5 → Trusted User' and awards the badge. This is deliberately not machine learning, and that's the right call — badges need to be transparent and predictable, not a black box."],
+    ["A database trigger or scheduled job","Re-checks badge eligibility whenever a relevant event happens (booking completed, review submitted) so badges stay up to date automatically."]
+  ],
+  data:["No external dataset needed — driven entirely by your own platform's activity data."],
+  alts:[
+    ["Badge logic","Rule-based (recommended) vs an ML-based tiering model","<b>Best pick: rule-based, on purpose.</b> This is actually worth stating clearly in your report: badges are a case where using machine learning would be over-engineering, and recognising when NOT to use ML is a mark of a mature data scientist — it will stand out precisely because most students reach for ML everywhere."]
+  ],
+  edges:[
+    ["Someone tries to game the system with fake bookings","Tie badge eligibility to your fraud-detection status (Feature 10) so flagged accounts can't earn credibility badges."],
+    ["Badge thresholds turn out too easy or too hard once real data exists","Recalibrate thresholds based on the actual distribution of real user activity rather than guessed numbers."]
+  ]
+},
+{
+  title:"Referral Program",
+  tagline:"Users invite friends; both sides get rewarded once the referral completes a booking",
+  flow:[
+    ["User shares referral code","unique code"],
+    ["New user signs up","with that code"],
+    ["First booking completed","trigger event"],
+    ["Reward issued","both accounts credited"],
+    ["Provider credibility updated","if referral-based"]
+  ],
+  tools:[
+    ["UUID / short-hash code generation (built into Python/most languages)","Generates a unique, hard-to-guess referral code per user — no external library or service needed."],
+    ["A referral-tracking table in your database","Simply records who referred whom and whether the reward has been triggered yet — again, this is clean database design more than machine learning."],
+    ["An event trigger on 'first booking completed'","Watches for that specific event and fires the reward logic automatically, rather than requiring anyone to manually check and credit accounts."]
+  ],
+  data:["No external dataset needed — entirely generated by the app's own signup and booking flow."],
+  alts:[
+    ["Referral tracking","Simple in-house database tracking (recommended) vs a third-party referral SaaS tool","<b>Best pick: build it yourself.</b> It's genuinely simple to implement correctly, keeps you API/cost-independent, and this is exactly how core referral systems work at companies like Uber and Airbnb under the hood — building your own version is a legitimate, honest thing to say you did."]
+  ],
+  edges:[
+    ["Someone refers their own second account for free rewards","Cross-check with your fraud-detection system (Feature 10) — e.g. same device or IP signing up repeatedly is a strong signal."],
+    ["A referral code goes viral and gets abused at scale","Cap how many rewards a single code can generate within a given time period."],
+    ["A referred user signs up but never books anything","Keep the reward in a 'pending' state and let it expire automatically after a set period rather than crediting it early."]
+  ]
+}
+];
+
+const arrow = () => `<span class="flow-arrow">→</span>`;
+
+function renderFlow(steps){
+  return steps.map((s,i)=>{
+    const box = `<div class="flow-step"><div class="t">${s[0]}</div><div class="s">${s[1]}</div></div>`;
+    return i < steps.length-1 ? box + arrow() : box;
+  }).join('');
+}
+
+function renderTools(tools){
+  return tools.map(t=>`<div class="tool"><div class="name">${t[0]}</div><div class="desc">${t[1]}</div></div>`).join('');
+}
+
+function renderData(items){
+  return `<ul class="plain">${items.map(d=>`<li>${d}</li>`).join('')}</ul>`;
+}
+
+function renderAlts(alts){
+  return alts.map(a=>`
+    <div class="alt">
+      <div class="for">${a[0]}</div>
+      <div class="opts">${a[1]}</div>
+      <div class="pick">${a[2]}</div>
+    </div>`).join('');
+}
+
+function renderEdges(edges){
+  return edges.map(e=>`
+    <div class="edge">
+      <div class="case">⚠ ${e[0]}</div>
+      <div class="handle">${e[1]}</div>
+    </div>`).join('');
+}
+
+const featuresEl = document.getElementById('features');
+const tocEl = document.getElementById('toc');
+
+FEATURES.forEach((f, idx)=>{
+  const id = 'feature-' + idx;
+  const n = String(idx+1).padStart(2,'0');
+
+  tocEl.innerHTML += `<a href="#${id}"><span class="n">${n}</span><span>${f.title}</span></a>`;
+
+  featuresEl.innerHTML += `
+  <section class="feature" id="${id}">
+    <div class="feature-head" onclick="this.parentElement.classList.toggle('open')">
+      <div class="num">${n}</div>
+      <h2>${f.title}<span class="tagline">${f.tagline}</span></h2>
+      <div class="chev">▾</div>
+    </div>
+    <div class="feature-body">
+      <div class="feature-body-inner">
+
+        <div class="subhead"><span class="dot" style="background:var(--cyan)"></span><h3>Flow Diagram</h3></div>
+        <div class="flow">${renderFlow(f.flow)}</div>
+
+        <div class="subhead"><span class="dot" style="background:var(--blue)"></span><h3>Tools & Concepts You Need</h3></div>
+        <div class="tool-list">${renderTools(f.tools)}</div>
+
+        <div class="subhead"><span class="dot" style="background:#4ade80"></span><h3>Where To Get Data</h3></div>
+        ${renderData(f.data)}
+
+        <div class="subhead"><span class="dot" style="background:var(--violet)"></span><h3>Alternatives & Best Pick</h3></div>
+        ${renderAlts(f.alts)}
+
+        <div class="subhead"><span class="dot" style="background:var(--amber)"></span><h3>Edge Cases To Handle</h3></div>
+        ${renderEdges(f.edges)}
+
+      </div>
+    </div>
+  </section>`;
+});
+
+// open the first feature by default
+document.getElementById('feature-0').classList.add('open');
+</script>
+
+</body>
+</html>
