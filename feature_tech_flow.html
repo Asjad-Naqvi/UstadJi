@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Build Specification — Step-by-Step User Flow × Tech Map</title>
+<style>
+  :root{
+    --paper:#F5F6F8; --panel:#FFFFFF; --ink:#1B2430; --ink-soft:#4B5563;
+    --line:#D7DCE3; --accent:#2D5DE0; --accent-soft:#E9EFFF;
+    --teal:#0F8B8D; --teal-soft:#E4F5F4; --amber:#B8752B; --amber-soft:#FBF0E1;
+    --grey:#5B6472; --grey-soft:#EEF0F3;
+    --mono:'IBM Plex Mono','Courier New',monospace; --sans:'Inter',-apple-system,'Segoe UI',Roboto,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);line-height:1.55;
+    background-image:linear-gradient(var(--line) 1px, transparent 1px),linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size:64px 64px;background-attachment:fixed;}
+
+  .cover{padding:60px 8vw 44px;background:var(--ink);color:#F5F6F8;position:relative;overflow:hidden;}
+  .cover::after{content:"";position:absolute;inset:0;
+    background:radial-gradient(circle at 85% 20%, rgba(45,93,224,0.35), transparent 45%),
+               radial-gradient(circle at 10% 90%, rgba(15,139,141,0.30), transparent 40%);pointer-events:none;}
+  .cover-eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:#9FB4E8;margin-bottom:16px;position:relative;}
+  .cover h1{font-size:clamp(28px,4vw,46px);line-height:1.12;margin:0 0 16px;max-width:20ch;font-weight:700;letter-spacing:-.01em;position:relative;}
+  .cover p.lede{max-width:66ch;color:#C6CDDA;font-size:16px;position:relative;}
+
+  .legend{max-width:1180px;margin:-26px auto 0;padding:0 8vw;position:relative;z-index:2;}
+  .legend-inner{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px 22px;
+    display:flex;flex-wrap:wrap;gap:16px 22px;box-shadow:0 12px 30px -18px rgba(20,30,60,.35);}
+  .legend-item{display:flex;align-items:center;gap:9px;font-size:13px;color:var(--ink-soft);}
+  .tag{font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
+    padding:3px 8px;border-radius:5px;flex-shrink:0;}
+  .tag.user{background:var(--grey-soft);color:var(--grey);}
+  .tag.tech{background:var(--accent-soft);color:var(--accent);}
+  .tag.back{background:var(--teal-soft);color:var(--teal);}
+  .tag.db{background:var(--amber-soft);color:var(--amber);}
+  .tag.altv{background:#FDEAEA;color:#B8402E;}
+
+  .shell{max-width:1180px;margin:0 auto;padding:52px 8vw 120px;display:grid;grid-template-columns:220px 1fr;gap:48px;}
+  @media (max-width:900px){.shell{grid-template-columns:1fr;padding:36px 6vw 70px;} nav.rail{position:static;order:2;margin-top:36px;}}
+  nav.rail{position:sticky;top:22px;align-self:start;font-family:var(--mono);font-size:12px;}
+  nav.rail .rail-title{text-transform:uppercase;letter-spacing:.14em;color:var(--ink-soft);font-size:10px;margin-bottom:12px;}
+  nav.rail ol{list-style:none;margin:0;padding:0;border-left:2px solid var(--line);}
+  nav.rail a{display:block;padding:6px 0 6px 14px;color:var(--ink-soft);text-decoration:none;border-left:2px solid transparent;margin-left:-2px;transition:color .15s;}
+  nav.rail a:hover{color:var(--accent);border-left-color:var(--accent);}
+  main{min-width:0;}
+
+  .module{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:32px 34px;margin-bottom:30px;scroll-margin-top:22px;}
+  .module-head{display:flex;align-items:baseline;gap:14px;margin-bottom:4px;}
+  .module-num{font-family:var(--mono);color:var(--accent);font-size:13px;font-weight:700;letter-spacing:.04em;}
+  .module h2{font-size:21px;margin:0;letter-spacing:-.01em;}
+  .module .dek{color:var(--ink-soft);font-size:14px;max-width:80ch;margin:8px 0 24px;}
+
+  .feature-block{border-top:1px solid var(--line);padding:22px 0 8px;}
+  .feature-block h3{font-size:15.5px;margin:0 0 4px;color:var(--ink);}
+  .feature-block .fdesc{font-size:13px;color:var(--ink-soft);margin:0 0 16px;}
+
+  /* step flow */
+  .journey{display:flex;flex-direction:column;gap:0;position:relative;margin-bottom:8px;}
+  .step{display:grid;grid-template-columns:28px 1fr;gap:14px;position:relative;padding-bottom:14px;}
+  .step:not(:last-child)::before{
+    content:"";position:absolute;left:13px;top:26px;bottom:-4px;width:2px;background:var(--line);
+  }
+  .step-num{
+    width:26px;height:26px;border-radius:50%;background:var(--ink);color:#fff;font-family:var(--mono);
+    font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;z-index:1;
+  }
+  .step-body{padding-top:2px;}
+  .step-body .tag{margin-right:8px;}
+  .step-text{font-size:13.8px;color:var(--ink);display:inline;}
+  .step-text b{font-family:var(--mono);font-weight:700;font-size:13px;}
+  .step-sub{font-size:13px;color:var(--ink-soft);margin:4px 0 0;}
+
+  .db-box{
+    font-family:var(--mono);font-size:12.5px;background:var(--amber-soft);border:1px solid #E9D3AD;
+    border-radius:7px;padding:9px 12px;margin:8px 0 6px 42px;color:#7A5323;
+  }
+  .db-box b{color:#8A5A17;}
+
+  .alt-box{
+    background:#FDEAEA;border:1px dashed #E7B9AF;border-radius:7px;padding:10px 13px;
+    margin:10px 0 6px 42px;font-size:13px;color:#7A2E20;
+  }
+  .alt-box .tag{margin-right:6px;}
+
+  table.spec{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:6px;}
+  table.spec th,table.spec td{text-align:left;padding:9px 11px;border-bottom:1px solid var(--line);vertical-align:top;}
+  table.spec th{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);font-weight:700;}
+  table.spec td.mono{font-family:var(--mono);font-size:12.5px;font-weight:700;}
+
+  .phase-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:8px;}
+  @media (max-width:800px){.phase-grid{grid-template-columns:1fr;}}
+  .phase-card{border:1px solid var(--line);border-radius:10px;padding:16px;}
+  .phase-card h4{margin:0 0 8px;font-size:12.5px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--teal);}
+  .phase-card ul{margin:0;padding-left:16px;font-size:13px;color:var(--ink-soft);}
+  .phase-card li{margin-bottom:5px;}
+
+  footer{max-width:1180px;margin:0 auto;padding:0 8vw 56px;color:var(--ink-soft);font-size:12.5px;font-family:var(--mono);}
+</style>
+</head>
+<body>
+
+<header class="cover">
+  <div class="cover-eyebrow">Final Year Project — Build Specification v2.0 (User-Flow Edition)</div>
+  <h1>Har click, har button, har step — user kya karega aur peechay kaunsa tool chalega.</h1>
+  <p class="lede">Ye document har feature ko chhote chhote user actions me todta hai — jaise user ne kya click kiya, ussay peechay konsa tool/tech chala, backend ne kya process kiya, aur database me kya store hua. Har module ke end pe ek DB schema box bhi hai taake aap seedha implementation pe move kar saken.</p>
+</header>
+
+<div class="legend">
+  <div class="legend-inner">
+    <div class="legend-item"><span class="tag user">User</span> user ka action / click / input</div>
+    <div class="legend-item"><span class="tag tech">Tech</span> kaunsa tool/library chal raha hai</div>
+    <div class="legend-item"><span class="tag back">Backend</span> server pe kya process ho raha hai</div>
+    <div class="legend-item"><span class="tag db">DB</span> database me kya save/read ho raha hai</div>
+    <div class="legend-item"><span class="tag altv">Lean Alt</span> agar tool complex lage to simpler option</div>
+  </div>
+</div>
+
+<div class="shell">
+<nav class="rail">
+  <div class="rail-title">Modules</div>
+  <ol>
+    <li><a href="#m1">01 · Registration & Login</a></li>
+    <li><a href="#m2">02 · Voice Booking & AI Assistant</a></li>
+    <li><a href="#m3">03 · Renovation Planning</a></li>
+    <li><a href="#m4">04 · Damage Assessment</a></li>
+    <li><a href="#m5">05 · Dynamic Pricing</a></li>
+    <li><a href="#m6">06 · Intent Routing</a></li>
+    <li><a href="#m7">07 · Scheduling & Booking</a></li>
+    <li><a href="#m8">08 · Approvals & Signatures</a></li>
+    <li><a href="#m9">09 · Invoices & Receipts</a></li>
+    <li><a href="#m10">10 · Trust & Fraud Safety</a></li>
+    <li><a href="#m11">11 · Reviews & Chat</a></li>
+    <li><a href="#m12">12 · Referral & Profiles</a></li>
+    <li><a href="#m13">13 · App/Backend Shell</a></li>
+    <li><a href="#phases">Build Order</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- MODULE 1 -->
+<section class="module" id="m1">
+  <div class="module-head"><span class="module-num">MODULE 01</span><h2>User Registration & Login</h2></div>
+  <p class="dek">User ka app ke andar sabse pehla interaction — naya account banana, purane account me login karna, password bhool jana, aur profile edit karna.</p>
+
+  <div class="feature-block">
+    <h3>A. New user — Registration (account banana)</h3>
+    <p class="fdesc">User pehli baar app kholta hai aur "Register" choose karta hai.</p>
+    <div class="journey">
+      <div class="step"><span class="step-num">1</span><div class="step-body">
+        <span class="tag user">User</span><span class="step-text">"Register" button pe click karta hai, apna <b>name, email/phone, password</b> type karta hai, "Customer" ya "Provider" role choose karta hai.</span>
+      </div></div>
+      <div class="step"><span class="step-num">2</span><div class="step-body">
+        <span class="tag tech">Tech</span><span class="step-text"><b>React Hook Form + Zod</b> — frontend pe hi turant check karta hai ke email sahi format me hai, password kam se kam 8 characters ka hai, koi field khali nahi. Galat hone pe turant error dikhata hai, server tak request jati hi nahi.</span>
+      </div></div>
+      <div class="step"><span class="step-num">3</span><div class="step-body">
+        <span class="tag user">User</span><span class="step-text">"Create Account" button dabata hai — form submit hota hai.</span>
+      </div></div>
+      <div class="step"><span class="step-num">4</span><div class="step-body">
+        <span class="tag back">Backend</span><span class="step-text"><b>NestJS</b> API request receive karta hai — pehle check karta hai ke email/phone pehle se database me exist to nahi karta (duplicate account rokne ke liye).</span>
+      </div></div>
+      <div class="step"><span class="step-num">5</span><div class="step-body">
+        <span class="tag tech">Tech</span><span class="step-text"><b>bcrypt (via Firebase Auth / Auth0's built-in hashing)</b> — password ko plain text me kabhi save nahi karta, hash bana kar store karta hai taake database leak hone par bhi password safe rahe.</span>
+      </div></div>
+      <div class="step"><span class="step-num">6</span><div class="step-body">
+        <span class="tag db">DB</span><span class="step-text"><b>PostgreSQL</b> — naya row insert hota hai users table me.</span>
+      </div></div>
+      <div class="db-box"><b>users</b> [ id, name, email, phone, password_hash, role (customer/provider), is_verified, created_at ]</div>
+      <div class="step"><span class="step-num">7</span><div class="step-body">
+        <span class="tag back">Backend</span><span class="step-text">OTP generate hota hai aur SMS/email pe bhejta hai — verification ke liye (agla feature dekhein).</span>
+      </div></div>
+      <div class="alt-box"><span class="tag altv">Lean Alt</span>Agar khud ka backend auth system banana time-consuming lage, to poora ye step "Firebase Auth" ek hi free SDK se kar sakte hain — duplicate check, password hashing, sab automatically ho jata hai, koi custom NestJS auth code likhne ki zaroorat nahi.</div>
+    </div>
+  </div>
+
+  <div class="feature-block">
+    <h3>B. OTP Verification (naya account confirm karna)</h3>
+    <div class="journey">
+      <div class="step"><span class="step-num">1</span><div class="step-body">
+        <span class="tag user">User</span><span class="step-text">Phone/email pe aya hua 6-digit code type karta hai.</span>
+      </div></div>
+      <div class="step"><span class="step-num">2</span><div class="step-body">
+        <span class="tag tech">Tech</span><span class="step-text"><b>speakeasy</b> — backend pe generate kiya gaya secret ke against, user ne jo code dala hai usay verify karta hai (<code>speakeasy.totp.verify()</code>).</span>
+      </div></div>
+      <div class="step"><span class="step-num">3</span><div class="step-body">
+        <span class="tag db">DB</span><span class="step-text"><b>PostgreSQL</b> — <code>is_verified</code> column ko <code>true</code> update karta hai.</span>
+      </div></div>
+      <div class="step"><span class="step-num">4</span><div class="step-body">
+        <span class="tag back">Backend</span><span class="step-text">Verification successful hone par account activate hota hai aur user seedha login/home screen pe redirect hota hai.</span>
+      </div></div>
+    </div>
+  </div>
+
+  <div class="feature-block">
+    <h3>C. Existing user — Login (purana account)</h3>
+    <div class="journey">
+      <div class="step"><span class="step-num">1</span><div class="step-body">
+        <span class="tag user">User</span><span class="step-text">"Login" button pe click karta hai, email/phone + password enter karta hai.</span>
+      </div></div>
+      <div class="step"><span class="step-num">2</span><div class="step-body">
+        <span class="tag back">Backend</span><span class="step-text"><b>NestJS</b> — database me email/phone search karta hai, phir daale hue password ka hash, stored hash se compare karta hai.</span>
+      </div></div>
+      <div class="step"><span class="step-num">3</span><div class="step-body">
+        <span class="tag tech">Tech</span><span class="step-text"><b>JWT (jsonwebtoken)</b> — password match hone par ek <b>access token</b> (15 min valid) aur <b>refresh token</b> (7 din valid) generate karta hai.</span>
+      </div></div>
+      <div class="step"><span class="step-num">4</span><div class="step-body">
+        <span class="tag tech">Tech</span><span class="step-text"><b>Redis</b> — session ko cache me store karta hai, taake har request pe baar baar PostgreSQL se user check na karna pade. "Ye user already login hai" — bina database scan kiye, sirf Redis se pata chal jata hai, jis se login bohat fast ho jata hai.</span>
+      </div></div>
+      <div class="step"><span class="step-num">5</span><div class="step-body">
+        <span class="tag user">User</span><span class="step-text">Token receive hota hai app me (Expo SecureStore me save hota hai), user home screen pe pohanch jata hai.</span>
+      </div></div>
+      <div class="db-box"><b>Redis key:</b> <code>session:{user_id}</code> → { token, role, last_active } &nbsp;|&nbsp; TTL = access token expiry</div>
+    </div>
+  </div>
+
+  <div class="feature-block">
+    <h3>D. Password Reset (password bhool jana)</h3>
+    <div class="journey">
+      <div class="step"><span class="step-num">1</span><div class="step-body">
+        <span class="tag user">User</span><span class="step-text">"Forgot Password" click karta hai, apna email/phone daal ta hai.</span>
+      </div></div>
+      <div class="step"><span class="step-num">2</span><div class="step-body">
+        <span class="tag tech">Tech</span><span class="step-text"><b>speakeasy</b> — ek time-limited reset OTP generate karta hai, SMS/email se bhejta hai.</span>
+      </div></div>
+      <div class="step"><span class="step-num">3</span><div class="step-body">
+        <span class="tag user">User</span><span class="step-text">OTP verify karta hai, naya password type karta hai (2 baar — confirm ke liye).</span>
+      </div></div>
+      <div class="step"><span class="step-num">4</span><div class="step-body">
+        <span class="tag back">Backend</span><span class="step-text">Naya password hash hota hai, <b>PostgreSQL</b> me <code>password_hash</code> column update hota hai, purane saare active tokens/sessions <b>Redis</b> se turant remove ho jate hain (security ke liye — taake koi purana session valid na rahe).</span>
+      </div></div>
+    </div>
+  </div>
+
+  <div class="feature-block">
+    <h3>E. Profile Edit (name, email, phone, profile picture update)</h3>
+    <div class="journey">
+      <div class="step"><span class="step-num">1</span><div class="step-body">
+        <span class="tag user">User</span><span class="step-text">"Edit Profile" screen kholta hai, name/phone/picture change karta hai, "Save" click karta hai.</span>
+      </div></div>
+      <div class="step"><span class="step-num">2</span><div class="step-body">
+        <span class="tag tech">Tech</span><span class="step-text"><b>React Hook Form + Zod</b> — dobara validate karta hai (e.g. phone number format sahi hai ya nahi).</span>
+      </div></div>
+      <div class="step"><span class="step-num">3</span><div class="step-body">
+        <span class="tag tech">Tech</span><span class="step-text">Profile picture ho to <b>AWS S3 / Cloudflare R2</b> pe upload hoti hai, sirf uska URL database me save hota hai (image khud database me kabhi nahi jati).</span>
+      </div></div>
+      <div class="step"><span class="step-num">4</span><div class="step-body">
+        <span class="tag db">DB</span><span class="step-text"><b>PostgreSQL</b> — users table ka relevant row update (UPDATE query) hota hai; <b>Redis</b> cached session bhi refresh hota hai naye data ke sath.</span>
+      </div></div>
+    </div>
+  </div>
+</section>
+
+<!-- MODULE 2 -->
+<section class="module" id="m2">
+  <div class="module-head"><span class="module-num">MODULE 02</span><h2>Voice-Powered Booking, Voice Chat & AI Assistant</h2></div>
+  <p class="dek">User bolke apni service book karta hai — Urdu, English ya Roman Urdu me, aur AI samajh kar booking bana deta hai.</p>
+
+  <div class="feature-block">
+    <h3>A. Voice Booking — recording se booking tak</h3>
+    <div class="journey">
+      <div class="step"><span class="step-num">1</span><div class="step-body">
+        <span class="tag user">User</span><span class="step-text">Mic button dabata hai aur bolta hai: <i>"mujhe plumber chahiye kal shaam DHA phase 2 me, budget 3000 tak"</i>.</span>
+      </div></div>
+      <div class="step"><span class="step-num">2</span><div class="step-body">
+        <span class="tag tech">Tech</span><span class="step-text"><b>RNNoise</b> — recording se background noise (traffic, TV, etc.) hata deta hai transcription se pehle.</span>
+      </div></div>
+      <div class="step"><span class="step-num">3</span><div class="step-body">
+        <span class="tag tech">Tech</span><span class="step-text"><b>Whisper (OpenAI, self-hosted)</b> — audio ko text me convert karta hai (speech-to-text). Ye aapke original list me missing tha, is liye add kiya hai.</span>
+      </div></div>
+      <div class="step"><span class="step-num">4</span><div class="step-body">
+        <span class="tag tech">Tech</span><span class="step-text"><b>fastText / langdetect</b> — transcribed text check karta hai ke Urdu hai, English hai, ya Roman Urdu — taake sahi NLP pipeline chune.</span>
+      </div></div>
+      <div class="step"><span class="step-num">5</span><div class="step-body">
+        <span class="tag tech">Tech</span><span class="step-text"><b>spaCy</b> — text se important cheezen nikalta hai: <code>service_type = plumber</code>, <code>location = DHA Phase 2</code>, <code>date = tomorrow evening</code>, <code>budget = 3000</code>.</span>
+      </div></div>
+      <div class="step"><span class="step-num">6</span><div class="step-body">
+        <span class="tag back">Backend</span><span class="step-text">Extracted data se ek draft booking banti hai, user ko confirm karne ke liye screen pe dikhai jati hai.</span>
+      </div></div>
+      <div class="step"><span class="step-num">7</span><div class="step-body">
+        <span class="tag user">User</span><span class="step-text">Draft check karta hai, "Confirm Booking" dabata hai.</span>
+      </div></div>
+      <div class="step"><span class="step-num">8</span><div class="step-body">
+        <span class="tag db">DB</span><span class="step-text"><b>PostgreSQL</b> — booking table me naya row create hota hai.</span>
+      </div></div>
+      <div class="db-box"><b>bookings</b> [ id, customer_id, provider_id (null until matched), service_type, location, scheduled_time, budget_estimate, status, source (voice/text), created_at ]</div>
+      <div class="alt-box"><span class="tag altv">Lean Alt</span>RNNoise ko skip kar sakte hain — Whisper khud hi halke background noise ko theek se handle kar leta hai; sirf tab add karein agar demo recordings me noise real problem ban raha ho.</div>
+    </div>
+  </div>
+
+  <div class="feature-block">
+    <h3>B. AI Assistant — chat se reply karna</h3>
+    <div class="journey">
+      <div class="step"><span class="step-num">1</span><div class="step-body">
+        <span class="tag user">User</span><span class="step-text">Assistant se sawal poochta hai (voice ya text) — jaise "kya mera booking confirm ho gaya?"</span>
+      </div></div>
+      <div class="step"><span class="step-num">2</span><div class="step-body">
+        <span class="tag tech">Tech</span><span class="step-text"><b>Hugging Face DistilBERT (fine-tuned)</b> — is sentence ka intent classify karta hai: booking-status-query.</span>
+      </div></div>
+      <div class="step"><span class="step-num">3</span><div class="step-body">
+        <span class="tag back">Backend</span><span class="step-text">DistilBERT ke intent ke mutabiq, database se related booking data fetch hota hai.</span>
+      </div></div>
+      <div class="step"><span class="step-num">4</span><div class="step-body">
+        <span class="tag tech">Tech</span><span class="step-text"><b>Free-tier LLM API (Gemini/Groq)</b> — fetched data ko ek natural, friendly reply sentence me convert karta hai user ki apni language me.</span>
+      </div></div>
+      <div class="step"><span class="step-num">5</span><div class="step-body">
+        <span class="tag tech">Tech</span><span class="step-text"><b>Socket.io</b> — reply turant, real-time chat screen pe deliver hota hai, bina refresh kiye.</span>
+      </div></div>
+    </div>
+  </div>
+</section>
+
+<!-- MODULE 3 -->
+<section class="module" id="m3">
+  <div class="module-head"><span class="module-num">MODULE 03</span><h2>Home Renovation Planning (Text Mode)</h2></div>
+  <p class="dek">User type kar ke apna renovation idea batata hai, app usay ek structured plan me convert karta hai.</p>
+
+  <div class="feature-block">
+    <h3>Renovation request se plan tak</h3>
+    <div class="journey">
+      <div class="step"><span class="step-num">1</span><div class="step-body">
+        <span class="tag user">User</span><span class="step-text">Chat box me type karta hai: <i>"apni kitchen renovate karwani hai, budget 50 hazar hai"</i>.</span>
+      </div></div>
+      <div class="step"><span class="step-num">2</span><div class="step-body">
+        <span class="tag tech">Tech</span><span class="step-text"><b>spaCy</b> — <code>room = kitchen</code>, <code>budget = 50000</code> extract karta hai.</span>
+      </div></div>
+      <div class="step"><span class="step-num">3</span><div class="step-body">
+        <span class="tag back">Backend</span><span class="step-text">Rule-based engine (PostgreSQL me stored rules) check karta hai: "kitchen renovation" ke liye typically electrician → tiler → painter → plumber, is order me chahiye hota hai.</span>
+      </div></div>
+      <div class="step"><span class="step-num">4</span><div class="step-body">
+        <span class="tag tech">Tech</span><span class="step-text"><b>Free LLM API</b> — is structured plan ko ek achi, samajhne wali sentence me likh kar user ko dikhata hai.</span>
+      </div></div>
+      <div class="step"><span class="step-num">5</span><div class="step-body">
+        <span class="tag user">User</span><span class="step-text">Plan dekh kar, jo services chahiye un me se select karta hai → har selection ek alag booking (Module 7) bana deta hai.</span>
+      </div></div>
+    </div>
+  </div>
+</section>
+
+<!-- MODULE 4 -->
+<section class="module" id="m4">
+  <div class="module-head"><span class="module-num">MODULE 04</span><h2>Multimodal Damage & Appliance Assessment</h2></div>
+  <p class="dek">User photo ya video bhejta hai kharab cheez ki, AI batata hai masla kya hai.</p>
+
+  <div class="feature-block">
+    <h3>Photo se problem identify karna</h3>
+    <div class="journey">
+      <div class="step"><span class="step-num">1</span><div class="step-body">
+        <span class="tag user">User</span><span class="step-text">Camera icon click karta hai, kharab appliance/pipe/wall ki photo khenchta ya gallery se choose karta hai.</span>
+      </div></div>
+      <div class="step"><span class="step-num">2</span><div class="step-body">
+        <span class="tag tech">Tech</span><span class="step-text"><b>YOLOv8</b> — photo me object detect karta hai (e.g. "washing machine", "leaking pipe joint") aur uske around box draw karta hai.</span>
+      </div></div>
+      <div class="step"><span class="step-num">3</span><div class="step-body">
+        <span class="tag tech">Tech</span><span class="step-text"><b>Tesseract OCR</b> — agar label/serial number/model number visible hai to detected region se text extract karta hai.</span>
+      </div></div>
+      <div class="step"><span class="step-num">4</span><div class="step-body">
+        <span class="tag tech">Tech</span><span class="step-text"><b>LLaVA (ya free hosted Gemini Vision)</b> — photo dekh kar plain-language description deta hai: "yeh pipe joint se paani leak ho raha hai, seal kharab lag rahi hai".</span>
+      </div></div>
+      <div class="step"><span class="step-num">5</span><div class="step-body">
+        <span class="tag tech">Tech</span><span class="step-text"><b>CLIP (optional)</b> — is photo ko purani "known issues" photos se compare kar ke closest matching problem suggest karta hai.</span>
+      </div></div>
+      <div class="step"><span class="step-num">6</span><div class="step-body">
+        <span class="tag db">DB</span><span class="step-text">Photo <b>S3/R2</b> pe upload hoti hai, detection result <b>PostgreSQL</b> me booking se link hota hai.</span>
+      </div></div>
+      <div class="db-box"><b>damage_reports</b> [ id, booking_id, image_url, detected_object, ocr_text, ai_description, confidence_score ]</div>
+      <div class="alt-box"><span class="tag altv">Lean Alt</span>CLIP skip kar ke sirf YOLOv8 ka detected label + LLaVA/Gemini ki description hi kaafi hai MVP ke liye — CLIP baad me "visual search" feature ke liye add kar sakte hain.</div>
+    </div>
+  </div>
+
+  <div class="feature-block">
+    <h3>Video se proof-of-work / damage assessment</h3>
+    <div class="journey">
+      <div class="step"><span class="step-num">1</span><div class="step-body">
+        <span class="tag user">User</span><span class="step-text">Chhoti video upload karta hai (damage dikhane ke liye, ya provider "job complete" proof ke liye).</span>
+      </div></div>
+      <div class="step"><span class="step-num">2</span><div class="step-body">
+        <span class="tag tech">Tech</span><span class="step-text"><b>FFmpeg</b> — video ko compress karta hai aur har 2 second pe ek frame nikal ta hai.</span>
+      </div></div>
+      <div class="step"><span class="step-num">3</span><div class="step-body">
+        <span class="tag tech">Tech</span><span class="step-text">Har frame Module 4's photo pipeline (YOLOv8 → Tesseract → LLaVA) se guzarta hai, dobara alag video-model banane ki zaroorat nahi.</span>
+      </div></div>
+    </div>
+  </div>
+</section>
+
+<!-- MODULE 5 -->
+<section class="module" id="m5">
+  <div class="module-head"><span class="module-num">MODULE 05</span><h2>Dynamic Pricing Engine</h2></div>
+  <div class="feature-block">
+    <h3>Request se price estimate tak</h3>
+    <div class="journey">
+      <div class="step"><span class="step-num">1</span><div class="step-body">
+        <span class="tag back">Backend</span><span class="step-text">Voice/text booking se already extracted <code>service_type, location, urgency, date</code> (Module 2/3 se — <b>spaCy</b> output) use hota hai.</span>
+      </div></div>
+      <div class="step"><span class="step-num">2</span><div class="step-body">
+        <span class="tag tech">Tech</span><span class="step-text">Rule-based pricing formula: <code>base_price[service_type] × distance_factor × urgency_factor × time_of_day_factor</code>.</span>
+      </div></div>
+      <div class="step"><span class="step-num">3</span><div class="step-body">
+        <span class="tag db">DB</span><span class="step-text"><b>PostgreSQL</b> — base rates ek <code>pricing_rules</code> table se read hote hain, jo aap khud tune kar sakte hain.</span>
+      </div></div>
+      <div class="db-box"><b>pricing_rules</b> [ service_type, base_price, urgency_multiplier, night_multiplier ]</div>
+      <div class="step"><span class="step-num">4</span><div class="step-body">
+        <span class="tag user">User</span><span class="step-text">Estimated price range screen pe dikhta hai booking confirm karne se pehle.</span>
+      </div></div>
+    </div>
+  </div>
+</section>
+
+<!-- MODULE 6 -->
+<section class="module" id="m6">
+  <div class="module-head"><span class="module-num">MODULE 06</span><h2>Intent Recognition & Request Routing</h2></div>
+  <div class="feature-block">
+    <h3>Message type pehchan kar sahi jaga bhejna</h3>
+    <div class="journey">
+      <div class="step"><span class="step-num">1</span><div class="step-body">
+        <span class="tag user">User</span><span class="step-text">Koi bhi message type/bolta hai — booking ho, complaint ho, ya cancellation.</span>
+      </div></div>
+      <div class="step"><span class="step-num">2</span><div class="step-body">
+        <span class="tag tech">Tech</span><span class="step-text"><b>DistilBERT (fine-tuned classifier)</b> — decide karta hai: booking / complaint / reschedule / cancel / general question.</span>
+      </div></div>
+      <div class="step"><span class="step-num">3</span><div class="step-body">
+        <span class="tag tech">Tech</span><span class="step-text"><b>spaCy</b> — us intent ke liye zaroori entity nikalta hai (jaise cancel ke liye booking ID).</span>
+      </div></div>
+      <div class="step"><span class="step-num">4</span><div class="step-body">
+        <span class="tag back">Backend</span><span class="step-text">Request sahi handler/screen ki taraf route hoti hai — e.g. cancel-intent seedha cancellation flow trigger karta hai.</span>
+      </div></div>
+    </div>
+  </div>
+</section>
+
+<!-- MODULE 7 -->
+<section class="module" id="m7">
+  <div class="module-head"><span class="module-num">MODULE 07</span><h2>Provider Scheduling & Booking Management</h2></div>
+
+  <div class="feature-block">
+    <h3>Provider apni availability set karta hai</h3>
+    <div class="journey">
+      <div class="step"><span class="step-num">1</span><div class="step-body">
+        <span class="tag user">User (Provider)</span><span class="step-text">"My Schedule" screen kholta hai, available dates/times select karta hai.</span>
+      </div></div>
+      <div class="step"><span class="step-num">2</span><div class="step-body">
+        <span class="tag tech">Tech</span><span class="step-text"><b>react-native-calendars</b> — month view dikhata hai, selected dates highlight hote hain.</span>
+      </div></div>
+      <div class="step"><span class="step-num">3</span><div class="step-body">
+        <span class="tag db">DB</span><span class="step-text"><b>PostgreSQL</b> — har slot ek row banta hai.</span>
+      </div></div>
+      <div class="db-box"><b>availability</b> [ id, provider_id, date, time_slot, is_booked ]</div>
+    </div>
+  </div>
+
+  <div class="feature-block">
+    <h3>Customer slot book karta hai</h3>
+    <div class="journey">
+      <div class="step"><span class="step-num">1</span><div class="step-body">
+        <span class="tag user">User (Customer)</span><span class="step-text">Provider ki calendar dekh kar ek free slot pe click karta hai.</span>
+      </div></div>
+      <div class="step"><span class="step-num">2</span><div class="step-body">
+        <span class="tag back">Backend</span><span class="step-text"><b>NestJS</b> — us slot ko atomically lock karta hai (transaction ke sath) taake do log ek hi slot na book kar saken.</span>
+      </div></div>
+      <div class="step"><span class="step-num">3</span><div class="step-body">
+        <span class="tag db">DB</span><span class="step-text"><code>is_booked = true</code> update hota hai, naya row <code>bookings</code> table me banta hai.</span>
+      </div></div>
+    </div>
+  </div>
+
+  <div class="feature-block">
+    <h3>Rescheduling</h3>
+    <div class="journey">
+      <div class="step"><span class="step-num">1</span><div class="step-body">
+        <span class="tag user">User</span><span class="step-text">"Reschedule" click karta hai, calendar se naya slot chunta hai.</span>
+      </div></div>
+      <div class="step"><span class="step-num">2</span><div class="step-body">
+        <span class="tag tech">Tech</span><span class="step-text"><b>BullMQ (Redis-backed queue)</b> — background me doosre party ko notification bhejta hai, taake API response instantly wapis aaye.</span>
+      </div></div>
+    </div>
+  </div>
+
+  <div class="feature-block">
+    <h3>Booking Verification (arrival confirm karna)</h3>
+    <div class="journey">
+      <div class="step"><span class="step-num">1</span><div class="step-body">
+        <span class="tag user">User (Provider)</span><span class="step-text">Location pe pohanch kar apna QR code dikhata hai / customer ka QR scan karta hai.</span>
+      </div></div>
+      <div class="step"><span class="step-num">2</span><div class="step-body">
+        <span class="tag tech">Tech</span><span class="step-text"><b>react-native-qrcode-svg</b> — unique QR generate karta hai booking ID encode kar ke; scan hone par booking status "started" ho jata hai.</span>
+      </div></div>
+    </div>
+  </div>
+</section>
+
+<!-- MODULE 8 -->
+<section class="module" id="m8">
+  <div class="module-head"><span class="module-num">MODULE 08</span><h2>Pricing Confirmation & Work Completion Approval</h2></div>
+  <div class="feature-block">
+    <h3>Price accept karna aur kaam complete confirm karna</h3>
+    <div class="journey">
+      <div class="step"><span class="step-num">1</span><div class="step-body">
+        <span class="tag user">User</span><span class="step-text">Estimated price dekh kar "Accept" dabata hai, phone screen pe apna signature banata hai (finger se).</span>
+      </div></div>
+      <div class="step"><span class="step-num">2</span><div class="step-body">
+        <span class="tag tech">Tech</span><span class="step-text"><b>react-native-signature-canvas</b> — signature ko image (base64/PNG) me capture karta hai.</span>
+      </div></div>
+      <div class="step"><span class="step-num">3</span><div class="step-body">
+        <span class="tag tech">Tech</span><span class="step-text">Signature image <b>S3/R2</b> pe upload hoti hai.</span>
+      </div></div>
+      <div class="step"><span class="step-num">4</span><div class="step-body">
+        <span class="tag db">DB</span><span class="step-text"><b>PostgreSQL</b> — booking record me signature URL + timestamp save hota hai.</span>
+      </div></div>
+      <div class="step"><span class="step-num">5</span><div class="step-body">
+        <span class="tag user">User</span><span class="step-text">Kaam khatam hone par phir se signature deta hai — "Work Completed, Approved" confirm karne ke liye.</span>
+      </div></div>
+      <div class="db-box"><b>approvals</b> [ id, booking_id, type (price_accept/work_complete), signature_url, timestamp ]</div>
+    </div>
+  </div>
+</section>
+
+<!-- MODULE 9 -->
+<section class="module" id="m9">
+  <div class="module-head"><span class="module-num">MODULE 09</span><h2>Invoices, Receipts & Reports</h2></div>
+  <div class="feature-block">
+    <h3>Booking complete hone ke baad invoice banana</h3>
+    <div class="journey">
+      <div class="step"><span class="step-num">1</span><div class="step-body">
+        <span class="tag back">Backend</span><span class="step-text">Booking status "completed" hote hi trigger hota hai.</span>
+      </div></div>
+      <div class="step"><span class="step-num">2</span><div class="step-body">
+        <span class="tag tech">Tech</span><span class="step-text"><b>pdfmake</b> — booking data (service, price, date, customer/provider details) se ek styled PDF invoice generate karta hai server pe.</span>
+      </div></div>
+      <div class="step"><span class="step-num">3</span><div class="step-body">
+        <span class="tag tech">Tech</span><span class="step-text"><b>react-native-qrcode-svg</b> — receipt pe ek verification QR add karta hai.</span>
+      </div></div>
+      <div class="step"><span class="step-num">4</span><div class="step-body">
+        <span class="tag user">User</span><span class="step-text">PDF download/share kar sakta hai, ya app ke andar "Service History" me dekh sakta hai.</span>
+      </div></div>
+      <div class="db-box"><b>invoices</b> [ id, booking_id, pdf_url, amount, generated_at ]</div>
+    </div>
+  </div>
+</section>
+
+<!-- MODULE 10 -->
+<section class="module" id="m10">
+  <div class="module-head"><span class="module-num">MODULE 10</span><h2>Trust & Safety — Fraud, Fake Accounts & Fake Reviews</h2></div>
+
+  <div class="feature-block">
+    <h3>Fake account network detect karna</h3>
+    <div class="journey">
+      <div class="step"><span class="step-num">1</span><div class="step-body">
+        <span class="tag back">Backend</span><span class="step-text">Background job (daily) chalta hai jo saare accounts ka data (device ID, phone, payment info) fetch karta hai.</span>
+      </div></div>
+      <div class="step"><span class="step-num">2</span><div class="step-body">
+        <span class="tag tech">Tech</span><span class="step-text"><b>NetworkX</b> — har user/provider/device ko ek "node" banata hai, shared attributes (same device, same payment method) ko "edge" banata hai; phir clusters dhoondta hai jo ek hi insan ke multiple fake accounts lag rahe hon.</span>
+      </div></div>
+      <div class="step"><span class="step-num">3</span><div class="step-body">
+        <span class="tag db">DB</span><span class="step-text">Suspicious accounts ek <code>flags</code> table me maark hote hain, admin panel me review ke liye.</span>
+      </div></div>
+      <div class="db-box"><b>fraud_flags</b> [ id, user_id, reason, cluster_id, flagged_at, reviewed ]</div>
+    </div>
+  </div>
+
+  <div class="feature-block">
+    <h3>Fake review detect karna</h3>
+    <div class="journey">
+      <div class="step"><span class="step-num">1</span><div class="step-body">
+        <span class="tag user">User</span><span class="step-text">Review submit karta hai (rating + text).</span>
+      </div></div>
+      <div class="step"><span class="step-num">2</span><div class="step-body">
+        <span class="tag tech">Tech</span><span class="step-text"><b>DistilBERT</b> — text ke pattern check karta hai (generic, template-jaisa, duplicate to nahi).</span>
+      </div></div>
+      <div class="step"><span class="step-num">3</span><div class="step-body">
+        <span class="tag tech">Tech</span><span class="step-text"><b>NetworkX</b> — check karta hai ke reviewer suspicious cluster ka hissa to nahi.</span>
+      </div></div>
+      <div class="step"><span class="step-num">4</span><div class="step-body">
+        <span class="tag back">Backend</span><span class="step-text">Suspicious lagne par review "pending moderation" me chala jata hai, public nahi hota jab tak review na ho.</span>
+      </div></div>
+    </div>
+  </div>
+
+  <div class="feature-block">
+    <h3>Urdu/Roman Urdu review sentiment score karna</h3>
+    <div class="journey">
+      <div class="step"><span class="step-num">1</span><div class="step-body">
+        <span class="tag tech">Tech</span><span class="step-text"><b>fastText</b> — review ki language detect karta hai.</span>
+      </div></div>
+      <div class="step"><span class="step-num">2</span><div class="step-body">
+        <span class="tag tech">Tech</span><span class="step-text">Urdu/Roman Urdu ho to <b>Urdu Sentiment Lexicon</b> se score hota hai (positive/negative words count); English ho to <b>DistilBERT</b> se.</span>
+      </div></div>
+    </div>
+  </div>
+</section>
+
+<!-- MODULE 11 -->
+<section class="module" id="m11">
+  <div class="module-head"><span class="module-num">MODULE 11</span><h2>Ratings, Reviews & Community (Chat, Comments)</h2></div>
+
+  <div class="feature-block">
+    <h3>Chat message bhejna (profanity filter ke sath)</h3>
+    <div class="journey">
+      <div class="step"><span class="step-num">1</span><div class="step-body">
+        <span class="tag user">User</span><span class="step-text">Message type kar ke "Send" dabata hai.</span>
+      </div></div>
+      <div class="step"><span class="step-num">2</span><div class="step-body">
+        <span class="tag tech">Tech</span><span class="step-text"><b>better-profanity</b> — message store/broadcast hone se pehle server pe check hota hai, gaali/abusive words censor ya block ho jate hain.</span>
+      </div></div>
+      <div class="step"><span class="step-num">3</span><div class="step-body">
+        <span class="tag tech">Tech</span><span class="step-text"><b>Socket.io</b> — clean message doosre user tak real-time pohanch jata hai.</span>
+      </div></div>
+    </div>
+  </div>
+
+  <div class="feature-block">
+    <h3>Review dena</h3>
+    <div class="journey">
+      <div class="step"><span class="step-num">1</span><div class="step-body">
+        <span class="tag user">User</span><span class="step-text">Completed booking pe stars + comment daal kar submit karta hai.</span>
+      </div></div>
+      <div class="step"><span class="step-num">2</span><div class="step-body">
+        <span class="tag tech">Tech</span><span class="step-text"><b>React Hook Form + Zod</b> — form validate karta hai; <b>better-profanity</b> comment check karta hai.</span>
+      </div></div>
+      <div class="step"><span class="step-num">3</span><div class="step-body">
+        <span class="tag db">DB</span><span class="step-text"><b>PostgreSQL</b> — review save hota hai, sirf un customers se accept hota hai jinki booking fill "completed" hai (fake review rokne ka basic tareeqa).</span>
+      </div></div>
+    </div>
+  </div>
+</section>
+
+<!-- MODULE 12 -->
+<section class="module" id="m12">
+  <div class="module-head"><span class="module-num">MODULE 12</span><h2>Referral Program & Provider Profiles</h2></div>
+  <div class="feature-block">
+    <h3>Referral se naya user lana</h3>
+    <div class="journey">
+      <div class="step"><span class="step-num">1</span><div class="step-body">
+        <span class="tag user">User</span><span class="step-text">"Invite Friends" screen kholta hai, apna referral QR share karta hai.</span>
+      </div></div>
+      <div class="step"><span class="step-num">2</span><div class="step-body">
+        <span class="tag tech">Tech</span><span class="step-text"><b>react-native-qrcode-svg</b> — QR me referral ID encode karta hai.</span>
+      </div></div>
+      <div class="step"><span class="step-num">3</span><div class="step-body">
+        <span class="tag user">User</span><span class="step-text">Dost QR scan kar ke sign up karta hai — Module 1 ka registration flow chalta hai, referral_id already linked hota hai.</span>
+      </div></div>
+      <div class="db-box"><b>users</b> table me extra column: <code>referred_by (user_id, nullable)</code></div>
+    </div>
+  </div>
+</section>
+
+<!-- MODULE 13 -->
+<section class="module" id="m13">
+  <div class="module-head"><span class="module-num">MODULE 13</span><h2>App Shell, Backend & Infrastructure</h2></div>
+  <p class="dek">Ye woh scaffolding hai jis ke andar upar ke saare 12 modules chalte hain.</p>
+  <table class="spec">
+    <tr><th>Layer</th><th>Tech</th><th>FYP Note</th></tr>
+    <tr><td class="mono">Mobile App</td><td>React Native + Expo + TypeScript</td><td>Keep — fastest way to a real installable app.</td></tr>
+    <tr><td class="mono">Navigation</td><td>React Navigation</td><td>Keep — standard choice.</td></tr>
+    <tr><td class="mono">State</td><td>Zustand</td><td>Keep — less boilerplate than Redux for solo/small team.</td></tr>
+    <tr><td class="mono">Data Fetching</td><td>TanStack Query</td><td>Keep — handles loading/error/retry automatically.</td></tr>
+    <tr><td class="mono">Backend</td><td>Node.js + NestJS</td><td>Keep if comfortable with TS OOP; Express.js is a lighter alt.</td></tr>
+    <tr><td class="mono">Database</td><td>PostgreSQL + Prisma</td><td>Keep — type-safe queries, easy migrations.</td></tr>
+    <tr><td class="mono">Cache/Queue</td><td>Redis + BullMQ</td><td>Keep — free self-host, simpler than Kafka for FYP scale.</td></tr>
+    <tr><td class="mono">Storage</td><td>Cloudflare R2 (cheaper than S3)</td><td>Prefer R2 for a student budget.</td></tr>
+    <tr><td class="mono">Hosting</td><td>Railway / Render / Fly.io</td><td>Skip full AWS ECS/K8s — overkill for FYP scope.</td></tr>
+    <tr><td class="mono">Monitoring</td><td>Sentry (free tier)</td><td>Keep — genuinely useful, demoable.</td></tr>
+    <tr><td class="mono">CI/CD</td><td>GitHub Actions + EAS Build</td><td>Keep — free, gives installable APK for defence.</td></tr>
+  </table>
+</section>
+
+<!-- PHASES -->
+<section class="module" id="phases">
+  <div class="module-head"><span class="module-num">BUILD ORDER</span><h2>Phased Rollout</h2></div>
+  <div class="phase-grid">
+    <div class="phase-card">
+      <h4>Phase 1 — Core Skeleton</h4>
+      <ul><li>Auth (Module 1)</li><li>Scheduling + Booking (Module 7)</li><li>Approvals + Invoices (Modules 8, 9)</li><li>Basic Reviews (Module 11)</li></ul>
+    </div>
+    <div class="phase-card">
+      <h4>Phase 2 — AI Showcase</h4>
+      <ul><li>Damage Assessment (Module 4)</li><li>Voice Booking (Module 2)</li><li>Intent Routing (Module 6)</li></ul>
+    </div>
+    <div class="phase-card">
+      <h4>Phase 3 — Trust & Polish</h4>
+      <ul><li>Fraud/Fake Review Detection (Module 10)</li><li>Dynamic Pricing (Module 5)</li><li>Referral Program (Module 12)</li></ul>
+    </div>
+  </div>
+</section>
+
+</main>
+</div>
+<footer>feature_tech_flow.html · user-flow edition · update as implementation proceeds</footer>
+</body>
+</html>
