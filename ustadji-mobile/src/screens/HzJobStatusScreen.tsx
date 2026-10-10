@@ -6,8 +6,10 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
+  Modal,
+  TextInput,
 } from "react-native";
-import { ArrowLeft, Clock, Phone, MapPin, CheckCircle2, RotateCcw, XCircle, FileText } from "lucide-react-native";
+import { ArrowLeft, Clock, Phone, MapPin, CheckCircle2, RotateCcw, XCircle, FileText, AlertTriangle, ShieldAlert } from "lucide-react-native";
 import { COLORS } from "../theme/theme";
 import { HzButton, HzCard } from "../components/HzPrimitives";
 
@@ -28,15 +30,13 @@ export const HzJobStatusScreen: React.FC<HzJobStatusScreenProps> = ({
   onCancel,
   booking,
 }) => {
-  const [jobPhase, setJobPhase] = useState<"SCHEDULED" | "IN_PROGRESS" | "COMPLETED">(
-    booking?.status === "COMPLETED"
-      ? "COMPLETED"
-      : booking?.status === "IN_PROGRESS"
-      ? "IN_PROGRESS"
-      : "SCHEDULED"
+  const [jobPhase, setJobPhase] = useState<"SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "DISPUTED">(
+    booking?.status || "SCHEDULED"
   );
   const [currentBookingData, setCurrentBookingData] = useState<any>(booking);
   const [loading, setLoading] = useState(false);
+  const [disputeModalVisible, setDisputeModalVisible] = useState(false);
+  const [disputeReason, setDisputeReason] = useState("");
 
   React.useEffect(() => {
     if (booking?.id) {
@@ -48,7 +48,7 @@ export const HzJobStatusScreen: React.FC<HzJobStatusScreenProps> = ({
     try {
       const data = await api.getBooking(booking.id);
       setCurrentBookingData(data);
-      if (data.status === "COMPLETED" || data.status === "IN_PROGRESS" || data.status === "SCHEDULED") {
+      if (data.status) {
         setJobPhase(data.status);
       }
     } catch (e) {
@@ -56,15 +56,50 @@ export const HzJobStatusScreen: React.FC<HzJobStatusScreenProps> = ({
     }
   };
 
-  const handleSetStatus = async (status: "IN_PROGRESS" | "COMPLETED") => {
+  const handleSetStatus = async (status: "IN_PROGRESS" | "COMPLETED", note?: string) => {
     if (!booking?.id) return;
     try {
       setLoading(true);
-      await api.updateBookingStatus(booking.id, status);
+      await api.updateBookingStatus(
+        booking.id,
+        status,
+        note || `Customer updated status to ${status}`,
+        "CUSTOMER"
+      );
       setJobPhase(status);
-      Alert.alert("Status Updated ✓", `Booking status updated to ${status}.`);
+      Alert.alert(
+        status === "COMPLETED" ? "Job Completed & Payment Released ✓" : "Status Updated ✓",
+        status === "COMPLETED"
+          ? "Thank you! The technician payout has been approved."
+          : `Booking status updated to ${status}.`
+      );
     } catch (e) {
       Alert.alert("Error Updating Status", (e as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRaiseDispute = async () => {
+    if (!booking?.id) return;
+    if (!disputeReason.trim()) {
+      Alert.alert("Reason Required", "Please describe why you are opening a dispute.");
+      return;
+    }
+    try {
+      setLoading(true);
+      await api.updateBookingStatus(
+        booking.id,
+        "DISPUTED",
+        disputeReason.trim(),
+        "CUSTOMER"
+      );
+      setJobPhase("DISPUTED");
+      setDisputeModalVisible(false);
+      setDisputeReason("");
+      Alert.alert("Dispute Filed ⚠️", "Our Support & Mediation Admin team will review your case and contact both parties.");
+    } catch (e) {
+      Alert.alert("Error Raising Dispute", (e as Error).message);
     } finally {
       setLoading(false);
     }
@@ -75,9 +110,10 @@ export const HzJobStatusScreen: React.FC<HzJobStatusScreenProps> = ({
   const issueDescription = currentBookingData?.issueDescription || booking?.issueDescription || "Service Request";
   const providerName = currentBookingData?.provider?.fullName || booking?.provider?.fullName || "Assigned Technician";
   const providerPhone = currentBookingData?.provider?.phone || booking?.provider?.phone || "+92 300 0000000";
-  const appointmentDate = currentBookingData?.appointmentDate ? String(currentBookingData.appointmentDate).slice(0, 10) : "Tomorrow";
+  const appointmentDate = currentBookingData?.appointmentDate ? String(currentBookingData.appointmentDate).slice(0, 10) : "Today";
   const startTime = currentBookingData?.startTime || "10:00";
   const endTime = currentBookingData?.endTime || "11:00";
+  const cancellationReason = currentBookingData?.cancellationReason || booking?.cancellationReason;
 
   return (
     <View style={styles.container}>
@@ -100,9 +136,17 @@ export const HzJobStatusScreen: React.FC<HzJobStatusScreenProps> = ({
                 jobPhase === "SCHEDULED" && { backgroundColor: "rgba(76, 175, 132, 0.15)" },
                 jobPhase === "IN_PROGRESS" && { backgroundColor: "rgba(22, 21, 51, 0.15)" },
                 jobPhase === "COMPLETED" && { backgroundColor: "rgba(16, 185, 129, 0.2)" },
+                jobPhase === "DISPUTED" && { backgroundColor: "rgba(255, 107, 53, 0.15)" },
               ]}
             >
-              <Text style={styles.statusBadgeText}>{jobPhase}</Text>
+              <Text
+                style={[
+                  styles.statusBadgeText,
+                  jobPhase === "DISPUTED" && { color: "#FF6B35" },
+                ]}
+              >
+                {jobPhase}
+              </Text>
             </View>
           </View>
 
@@ -128,6 +172,24 @@ export const HzJobStatusScreen: React.FC<HzJobStatusScreenProps> = ({
           </View>
         </HzCard>
 
+        {/* Dispute Banner if DISPUTED */}
+        {jobPhase === "DISPUTED" && (
+          <HzCard style={styles.disputeBannerCard}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+              <ShieldAlert size={26} color="#FF6B35" />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.disputeTitle}>Dispute Opened — Under Admin Mediation</Text>
+                <Text style={styles.disputeSub}>
+                  {cancellationReason ? `Reason: "${cancellationReason}"` : "Issue reported by party."}
+                </Text>
+                <Text style={styles.disputeNote}>
+                  Payment is held securely in escrow while UstadJi Admin reviews evidence and logs.
+                </Text>
+              </View>
+            </View>
+          </HzCard>
+        )}
+
         {/* Assigned Provider Card */}
         <HzCard style={styles.card}>
           <Text style={styles.cardSectionLabel}>Assigned Technician</Text>
@@ -147,20 +209,31 @@ export const HzJobStatusScreen: React.FC<HzJobStatusScreenProps> = ({
 
         {/* Actions Stack */}
         <View style={{ gap: 10, marginTop: 10 }}>
-          {jobPhase !== "COMPLETED" && (
+          {jobPhase !== "COMPLETED" && jobPhase !== "DISPUTED" && (
             <>
-              <HzButton
-                label={loading ? "Updating..." : "Mark Provider Arrived (IN PROGRESS)"}
-                variant="secondary"
-                disabled={loading}
-                onPress={() => handleSetStatus("IN_PROGRESS")}
-              />
+              {jobPhase === "IN_PROGRESS" && (
+                <HzButton
+                  label={loading ? "Updating..." : "Confirm Job Completion & Release Payment ✓"}
+                  style={{ backgroundColor: COLORS.green }}
+                  disabled={loading}
+                  onPress={() => handleSetStatus("COMPLETED", "Customer confirmed completion & released payment")}
+                />
+              )}
+
+              {jobPhase === "SCHEDULED" && (
+                <HzButton
+                  label={loading ? "Updating..." : "Mark Provider Arrived (IN PROGRESS)"}
+                  variant="secondary"
+                  disabled={loading}
+                  onPress={() => handleSetStatus("IN_PROGRESS")}
+                />
+              )}
 
               <HzButton
-                label={loading ? "Updating..." : "Mark Work Finished (COMPLETED)"}
-                style={{ backgroundColor: COLORS.green }}
+                label="Raise Dispute / Report Issue ⚠️"
+                variant="danger"
                 disabled={loading}
-                onPress={() => handleSetStatus("COMPLETED")}
+                onPress={() => setDisputeModalVisible(true)}
               />
             </>
           )}
@@ -170,24 +243,88 @@ export const HzJobStatusScreen: React.FC<HzJobStatusScreenProps> = ({
             onPress={onViewInvoice}
           />
 
-          <View style={{ flexDirection: "row", gap: 10 }}>
-            <HzButton
-              label="Reschedule Slot"
-              variant="secondary"
-              style={{ flex: 1 }}
-              onPress={onReschedule}
-            />
-            <HzButton
-              label="Cancel Job"
-              variant="danger"
-              style={{ flex: 1 }}
-              onPress={onCancel}
-            />
-          </View>
+          {jobPhase !== "DISPUTED" && jobPhase !== "COMPLETED" && (
+            <View style={{ flexDirection: "row", gap: 10 }}>
+              <HzButton
+                label="Reschedule Slot"
+                variant="secondary"
+                style={{ flex: 1 }}
+                onPress={onReschedule}
+              />
+              <HzButton
+                label="Cancel Job"
+                variant="danger"
+                style={{ flex: 1 }}
+                onPress={onCancel}
+              />
+            </View>
+          )}
         </View>
 
         <View style={{ height: 40 }} />
       </ScrollView>
+
+      {/* Dispute Modal */}
+      <Modal
+        visible={disputeModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setDisputeModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 12 }}>
+              <AlertTriangle size={22} color="#FF6B35" />
+              <Text style={styles.modalTitle}>File Dispute / Report Issue</Text>
+            </View>
+            <Text style={styles.modalSubtitle}>
+              Please select or describe the issue encountered with this job:
+            </Text>
+
+            <View style={{ gap: 6, marginVertical: 10 }}>
+              {["Work incomplete or poor quality", "Overcharging / Pricing dispute", "Provider no-show or severe delay", "Property damage or safety issue"].map((reason) => (
+                <TouchableOpacity
+                  key={reason}
+                  style={[
+                    styles.reasonChip,
+                    disputeReason === reason && { backgroundColor: "rgba(255, 107, 53, 0.15)", borderColor: "#FF6B35" },
+                  ]}
+                  onPress={() => setDisputeReason(reason)}
+                >
+                  <Text style={[styles.reasonChipText, disputeReason === reason && { color: "#FF6B35", fontWeight: "700" }]}>
+                    {reason}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <TextInput
+              style={styles.textInput}
+              placeholder="Or write custom reason..."
+              value={disputeReason}
+              onChangeText={setDisputeReason}
+              multiline
+              numberOfLines={3}
+            />
+
+            <View style={{ flexDirection: "row", gap: 10, marginTop: 14 }}>
+              <HzButton
+                label="Cancel"
+                variant="secondary"
+                style={{ flex: 1 }}
+                onPress={() => setDisputeModalVisible(false)}
+              />
+              <HzButton
+                label={loading ? "Submitting..." : "Submit Dispute"}
+                variant="danger"
+                style={{ flex: 1 }}
+                disabled={loading}
+                onPress={handleRaiseDispute}
+              />
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -295,5 +432,72 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.green,
     alignItems: "center",
     justifyContent: "center",
+  },
+  disputeBannerCard: {
+    padding: 14,
+    backgroundColor: "rgba(255, 107, 53, 0.08)",
+    borderWidth: 1,
+    borderColor: "rgba(255, 107, 53, 0.3)",
+  },
+  disputeTitle: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#FF6B35",
+  },
+  disputeSub: {
+    fontSize: 12,
+    color: "#161533",
+    marginTop: 2,
+    fontWeight: "600",
+  },
+  disputeNote: {
+    fontSize: 11,
+    color: "#666666",
+    marginTop: 4,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    padding: 20,
+    width: "100%",
+    maxWidth: 400,
+  },
+  modalTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#161533",
+  },
+  modalSubtitle: {
+    fontSize: 12,
+    color: "#666666",
+  },
+  reasonChip: {
+    padding: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#E8E3DB",
+    backgroundColor: "#FAF8F5",
+  },
+  reasonChipText: {
+    fontSize: 12,
+    color: "#161533",
+  },
+  textInput: {
+    borderWidth: 1,
+    borderColor: "#E8E3DB",
+    borderRadius: 8,
+    padding: 10,
+    fontSize: 12,
+    color: "#161533",
+    backgroundColor: "#FAF8F5",
+    textAlignVertical: "top",
+    marginTop: 6,
   },
 });
