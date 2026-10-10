@@ -24,11 +24,37 @@ export const HzAwaitingScreen: React.FC<HzAwaitingScreenProps> = ({
   const providerId = booking?.providerId;
 
   useEffect(() => {
+    let pollInterval: any;
+
+    if (booking?.id) {
+      // Real-time polling every 3s to detect provider acceptance automatically
+      pollInterval = setInterval(async () => {
+        try {
+          const fresh = await api.getBooking(booking.id);
+          if (fresh.status === "SCHEDULED" || fresh.status === "IN_PROGRESS") {
+            clearInterval(pollInterval);
+            Alert.alert("Request Accepted! 🎉", `${providerName} accepted your booking request.`);
+            onAccepted();
+          } else if (fresh.status === "REJECTED" || fresh.status === "EXPIRED" || fresh.status === "CANCELLED") {
+            clearInterval(pollInterval);
+            Alert.alert("Booking Update", `Your booking request was ${fresh.status.toLowerCase()}.`);
+            onCancel();
+          }
+        } catch (e) {
+          console.warn("Polling booking status failed:", e);
+        }
+      }, 3000);
+    }
+
     const timer = setInterval(() => {
       setSecondsLeft((prev) => (prev > 0 ? prev - 1 : 0));
     }, 1000);
-    return () => clearInterval(timer);
-  }, []);
+
+    return () => {
+      clearInterval(timer);
+      if (pollInterval) clearInterval(pollInterval);
+    };
+  }, [booking?.id]);
 
   const handleSimulateAcceptance = async () => {
     if (!booking?.id || !providerId) return;
@@ -72,7 +98,7 @@ export const HzAwaitingScreen: React.FC<HzAwaitingScreenProps> = ({
 
       <View style={styles.btnStack}>
         <HzButton
-          label={loading ? "Accepting Request..." : "Simulate Provider Acceptance ✓"}
+          label={loading ? "Accepting Request..." : "Accept Request (Provider Side Action) ✓"}
           style={{ backgroundColor: COLORS.green }}
           disabled={loading}
           onPress={handleSimulateAcceptance}
