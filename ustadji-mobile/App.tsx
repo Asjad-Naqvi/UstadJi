@@ -45,6 +45,7 @@ export default function App() {
   const [selectedProvider, setSelectedProvider] = useState<any>(null);
   const [bookingDate, setBookingDate] = useState("Tomorrow");
   const [bookingTime, setBookingTime] = useState("10:00 AM - 11:00 AM");
+  const [currentBooking, setCurrentBooking] = useState<any>(null);
 
   const handleLoginSuccess = (role: "consumer" | "provider" | "admin", user?: any) => {
     setUserRole(role);
@@ -191,14 +192,24 @@ export default function App() {
           <HzBookingConfirmationScreen
             selectedDate={bookingDate}
             selectedTime={bookingTime}
+            selectedProvider={selectedProvider}
+            currentUser={currentUser}
             onBack={() => setCurrentScreen("date-time-picker")}
-            onConfirm={() => setCurrentScreen("awaiting")}
+            onConfirm={(b) => {
+              setCurrentBooking(b);
+              if (b?.status === "SCHEDULED") {
+                setCurrentScreen("job-status");
+              } else {
+                setCurrentScreen("awaiting");
+              }
+            }}
           />
         );
 
       case "awaiting":
         return (
           <HzAwaitingScreen
+            booking={currentBooking}
             onCancel={() => setCurrentScreen("main")}
             onAccepted={() => setCurrentScreen("job-status")}
           />
@@ -225,6 +236,7 @@ export default function App() {
       case "provider-active-job":
         return (
           <HzProviderActiveJobScreen
+            booking={currentBooking}
             onBack={() => setCurrentScreen("main")}
             onFinishJob={() => setCurrentScreen("main")}
           />
@@ -315,8 +327,12 @@ export default function App() {
                 )}
                 {activeTab === "inbox" && (
                   <HzProviderInboxScreen
+                    providerId={currentUser?.id || "18cc5f37-d760-4bdc-a2fe-f6d49c61d54b"}
                     onBack={() => setActiveTab("dashboard")}
-                    onJobAccepted={() => setCurrentScreen("provider-active-job")}
+                    onJobAccepted={(b) => {
+                      if (b) setCurrentBooking(b);
+                      setCurrentScreen("provider-active-job");
+                    }}
                   />
                 )}
                 {activeTab === "profile" && (

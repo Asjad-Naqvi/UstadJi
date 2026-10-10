@@ -3,17 +3,25 @@ import { View, Text, StyleSheet } from "react-native";
 import { Clock, CheckCircle2, X } from "lucide-react-native";
 import { COLORS } from "../theme/theme";
 import { HzButton } from "../components/HzPrimitives";
+import { api } from "../services/api";
 
 interface HzAwaitingScreenProps {
   onCancel: () => void;
   onAccepted: () => void;
+  booking?: any;
 }
 
 export const HzAwaitingScreen: React.FC<HzAwaitingScreenProps> = ({
   onCancel,
   onAccepted,
+  booking,
 }) => {
   const [secondsLeft, setSecondsLeft] = useState(1795); // ~29:55
+  const [loading, setLoading] = useState(false);
+
+  const bookingCode = booking?.bookingCode || "BK-1001";
+  const providerName = booking?.provider?.fullName || "Ustad Tariq Mehmood";
+  const providerId = booking?.providerId || "18cc5f37-d760-4bdc-a2fe-f6d49c61d54b";
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -21,6 +29,21 @@ export const HzAwaitingScreen: React.FC<HzAwaitingScreenProps> = ({
     }, 1000);
     return () => clearInterval(timer);
   }, []);
+
+  const handleSimulateAcceptance = async () => {
+    try {
+      setLoading(true);
+      if (booking?.id && !booking.id.startsWith("sim-")) {
+        await api.acceptBooking(booking.id, providerId);
+      }
+      onAccepted();
+    } catch (e) {
+      console.warn("Accept API notice:", e);
+      onAccepted();
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const mins = Math.floor(secondsLeft / 60);
   const secs = secondsLeft % 60;
@@ -37,7 +60,7 @@ export const HzAwaitingScreen: React.FC<HzAwaitingScreenProps> = ({
       </View>
 
       <Text style={styles.heading}>Awaiting Confirmation</Text>
-      <Text style={styles.subheading}>30-Minute Response Window Active</Text>
+      <Text style={styles.subheading}>30-Minute Response Window Active ({bookingCode})</Text>
 
       {/* Countdown Timer */}
       <View style={styles.timerBox}>
@@ -46,14 +69,15 @@ export const HzAwaitingScreen: React.FC<HzAwaitingScreenProps> = ({
       </View>
 
       <Text style={styles.infoText}>
-        Ustad Tariq has been notified via push notification. Your selected time slot is locked in the scheduling engine.
+        {providerName} has been notified via push notification. Your selected time slot is locked in the scheduling engine.
       </Text>
 
       <View style={styles.btnStack}>
         <HzButton
-          label="Simulate Provider Acceptance ✓"
+          label={loading ? "Accepting Request..." : "Simulate Provider Acceptance ✓"}
           style={{ backgroundColor: COLORS.green }}
-          onPress={onAccepted}
+          disabled={loading}
+          onPress={handleSimulateAcceptance}
         />
 
         <HzButton

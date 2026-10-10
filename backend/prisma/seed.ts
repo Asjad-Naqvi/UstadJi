@@ -169,7 +169,113 @@ async function main() {
     },
   });
 
-  // 7. Create Sample Active & Past Bookings
+  // 7. Create Provider 4 (Ustad Muhammad Aslam - Carpenter)
+  const provider4User = await prisma.user.create({
+    data: {
+      email: "aslam@ustadji.pk",
+      phone: "+923332221100",
+      password: hashedPassword,
+      fullName: "Ustad Muhammad Aslam",
+      role: "PROVIDER",
+    },
+  });
+
+  const provider4 = await prisma.providerProfile.create({
+    data: {
+      userId: provider4User.id,
+      trade: "Master Carpenter & Woodwork",
+      experienceYears: 15,
+      hourlyRate: 900.0,
+      rating: 4.8,
+      reviewCount: 112,
+      sectorsCovered: "I-8, H-8, Rawalpindi, F-8",
+      isVerified: true,
+      bookingPreference: "MANUAL_APPROVAL",
+      bufferMinutes: 30,
+      workingHours: {
+        create: [1, 2, 3, 4, 5, 6].map((day) => ({
+          dayOfWeek: day,
+          startTime: "09:00",
+          endTime: "18:00",
+          isWorkingDay: true,
+        })),
+      },
+    },
+  });
+
+  // 8. Create Provider 5 (Ustad Noman Qureshi - Painter)
+  const provider5User = await prisma.user.create({
+    data: {
+      email: "noman@ustadji.pk",
+      phone: "+923338884422",
+      password: hashedPassword,
+      fullName: "Ustad Noman Qureshi",
+      role: "PROVIDER",
+    },
+  });
+
+  const provider5 = await prisma.providerProfile.create({
+    data: {
+      userId: provider5User.id,
+      trade: "Painter & Finishing Specialist",
+      experienceYears: 8,
+      hourlyRate: 700.0,
+      rating: 4.7,
+      reviewCount: 65,
+      sectorsCovered: "F-7, F-8, Blue Area, G-9",
+      isVerified: true,
+      bookingPreference: "AUTO_CONFIRM",
+      bufferMinutes: 30,
+      workingHours: {
+        create: [1, 2, 3, 4, 5, 6].map((day) => ({
+          dayOfWeek: day,
+          startTime: "08:30",
+          endTime: "17:30",
+          isWorkingDay: true,
+        })),
+      },
+    },
+  });
+
+  // 9. Create Customer 3 (Hamza Abbasi)
+  const customer3 = await prisma.user.create({
+    data: {
+      email: "hamza@ustadji.pk",
+      phone: "+923005559900",
+      password: hashedPassword,
+      fullName: "Hamza Abbasi",
+      role: "CUSTOMER",
+      customerProfile: {
+        create: {
+          address: "Villa 12, Sector E-11/3",
+          sector: "E-11/3",
+          city: "Islamabad",
+          avatarUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80",
+        },
+      },
+    },
+  });
+
+  // 10. Create Customer 4 (Fatima Zahra)
+  const customer4 = await prisma.user.create({
+    data: {
+      email: "fatima@ustadji.pk",
+      phone: "+923005557788",
+      password: hashedPassword,
+      fullName: "Fatima Zahra",
+      role: "CUSTOMER",
+      customerProfile: {
+        create: {
+          address: "House 55, Street 4, Sector F-10/2",
+          sector: "F-10/2",
+          city: "Islamabad",
+          avatarUrl: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80",
+        },
+      },
+    },
+  });
+
+  // 11. Create Sample Active & Past Bookings
   const today = new Date();
   const tomorrow = new Date(today);
   tomorrow.setDate(tomorrow.getDate() + 1);
@@ -233,11 +339,16 @@ async function main() {
   console.log("✅ Seed completed successfully!");
   console.log("-----------------------------------------");
   console.log("Demo Credentials:");
-  console.log("Customer: zain@ustadji.pk / password123");
-  console.log("Customer: ayesha@ustadji.pk / password123");
-  console.log("Provider (Manual): tariq@ustadji.pk / password123");
-  console.log("Provider (Auto):   rashid@ustadji.pk / password123");
-  console.log("Admin:    admin@ustadji.pk / adminpassword");
+  console.log("Customer 1: zain@ustadji.pk / password123 (Zain Khan)");
+  console.log("Customer 2: ayesha@ustadji.pk / password123 (Ayesha Malik)");
+  console.log("Customer 3: hamza@ustadji.pk / password123 (Hamza Abbasi)");
+  console.log("Customer 4: fatima@ustadji.pk / password123 (Fatima Zahra)");
+  console.log("Provider 1 (Manual): tariq@ustadji.pk / password123 (Ustad Tariq - Plumber)");
+  console.log("Provider 2 (Auto):   rashid@ustadji.pk / password123 (Ustad Rashid - HVAC)");
+  console.log("Provider 3 (Manual): bilal@ustadji.pk / password123 (Ustad Bilal - Electrician)");
+  console.log("Provider 4 (Manual): aslam@ustadji.pk / password123 (Ustad Aslam - Carpenter)");
+  console.log("Provider 5 (Auto):   noman@ustadji.pk / password123 (Ustad Noman - Painter)");
+  console.log("Admin:      admin@ustadji.pk / adminpassword");
   console.log("-----------------------------------------");
 }
 

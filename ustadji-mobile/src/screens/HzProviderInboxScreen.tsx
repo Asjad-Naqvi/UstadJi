@@ -1,10 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
   ScrollView,
   TouchableOpacity,
   StyleSheet,
+  ActivityIndicator,
   Alert,
 } from "react-native";
 import { ArrowLeft, Clock, CheckCircle2, XCircle, MapPin, DollarSign } from "lucide-react-native";
@@ -14,42 +15,70 @@ import { api } from "../services/api";
 
 interface HzProviderInboxScreenProps {
   onBack: () => void;
-  onJobAccepted: () => void;
+  onJobAccepted: (booking?: any) => void;
+  providerId?: string;
 }
 
 export const HzProviderInboxScreen: React.FC<HzProviderInboxScreenProps> = ({
   onBack,
   onJobAccepted,
+  providerId = "18cc5f37-d760-4bdc-a2fe-f6d49c61d54b", // Default Ustad Tariq
 }) => {
   const [activeTab, setActiveTab] = useState<"requests" | "active">("requests");
-  const [requests, setRequests] = useState([
-    {
-      id: "req-1",
-      code: "BK-7204",
-      customer: "Zain Khan",
-      issue: "Main water pipe valve leaking in kitchen",
-      sector: "House 24, Street 12, F-7/2 Islamabad",
-      date: "Tomorrow",
-      time: "10:00 AM - 11:00 AM",
-      price: "PKR 800",
-      minutesLeft: 22,
-    },
-  ]);
+  const [pendingRequests, setPendingRequests] = useState<any[]>([]);
+  const [activeBookings, setActiveBookings] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const handleAccept = async (id: string) => {
+  useEffect(() => {
+    fetchData();
+  }, [activeTab]);
+
+  const fetchData = async () => {
     try {
-      // Call backend accept endpoint if real booking ID
-      setRequests((prev) => prev.filter((r) => r.id !== id));
-      Alert.alert("Job Accepted! 🎉", "Booking status moved to SCHEDULED. Customer has been notified.");
-      onJobAccepted();
+      setLoading(true);
+      if (activeTab === "requests") {
+        const data = await api.getBookings(undefined, providerId, "PENDING_ACCEPTANCE");
+        setPendingRequests(data);
+      } else {
+        const scheduled = await api.getBookings(undefined, providerId, "SCHEDULED");
+        const inProgress = await api.getBookings(undefined, providerId, "IN_PROGRESS");
+        setActiveBookings([...inProgress, ...scheduled]);
+      }
     } catch (e) {
-      Alert.alert("Error", (e as Error).message);
+      console.warn("Could not fetch provider bookings:", e);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleDecline = (id: string) => {
-    setRequests((prev) => prev.filter((r) => r.id !== id));
-    Alert.alert("Request Declined", "Slot released and customer informed.");
+  const handleAccept = async (booking: any) => {
+    try {
+      setLoading(true);
+      await api.acceptBooking(booking.id, providerId);
+      Alert.alert(
+        "Job Accepted! 🎉",
+        `Booking ${booking.bookingCode} confirmed. Status moved to SCHEDULED.`
+      );
+      fetchData();
+      onJobAccepted(booking);
+    } catch (e) {
+      Alert.alert("Error", (e as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDecline = async (booking: any) => {
+    try {
+      setLoading(true);
+      await api.rejectBooking(booking.id, providerId, "Provider unavailable");
+      Alert.alert("Request Declined", "Slot released and customer informed.");
+      fetchData();
+    } catch (e) {
+      Alert.alert("Error", (e as Error).message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -69,7 +98,7 @@ export const HzProviderInboxScreen: React.FC<HzProviderInboxScreenProps> = ({
           onPress={() => setActiveTab("requests")}
         >
           <Text style={[styles.tabText, activeTab === "requests" && styles.tabTextActive]}>
-            Pending Requests ({requests.length})
+            Pending Requests ({pendingRequests.length})
           </Text>
         </TouchableOpacity>
 
@@ -78,40 +107,46 @@ export const HzProviderInboxScreen: React.FC<HzProviderInboxScreenProps> = ({
           onPress={() => setActiveTab("active")}
         >
           <Text style={[styles.tabText, activeTab === "active" && styles.tabTextActive]}>
-            Active / Scheduled Jobs
+            Active / Scheduled Jobs ({activeBookings.length})
           </Text>
         </TouchableOpacity>
       </View>
 
       <ScrollView style={styles.content} contentContainerStyle={{ padding: 16, gap: 14 }}>
+        {loading && <ActivityIndicator size="small" color={COLORS.navy} style={{ marginVertical: 10 }} />}
+
         {activeTab === "requests" ? (
-          requests.length > 0 ? (
-            requests.map((req) => (
+          pendingRequests.length > 0 ? (
+            pendingRequests.map((req) => (
               <HzCard key={req.id} style={styles.card}>
                 <View style={styles.cardTop}>
-                  <Text style={styles.cardCode}>{req.code}</Text>
+                  <Text style={styles.cardCode}>{req.bookingCode}</Text>
                   <View style={styles.timerBadge}>
                     <Clock size={12} color="#FFFFFF" />
-                    <Text style={styles.timerText}>{req.minutesLeft}m left to respond</Text>
+                    <Text style={styles.timerText}>30m Window Active</Text>
                   </View>
                 </View>
 
-                <Text style={styles.issueText}>{req.issue}</Text>
-                <Text style={styles.customerText}>Customer: {req.customer}</Text>
+                <Text style={styles.issueText}>{req.issueDescription}</Text>
+                <Text style={styles.customerText}>
+                  Customer: {req.customer?.fullName || "Zain Khan"}
+                </Text>
 
                 <View style={styles.infoRow}>
                   <MapPin size={14} color="#9B9B9B" />
-                  <Text style={styles.infoText}>{req.sector}</Text>
+                  <Text style={styles.infoText}>Sector F-7/2, Islamabad</Text>
                 </View>
 
                 <View style={styles.infoRow}>
                   <Clock size={14} color="#9B9B9B" />
-                  <Text style={styles.infoText}>{req.date} at {req.time}</Text>
+                  <Text style={styles.infoText}>
+                    {String(req.appointmentDate).slice(0, 10)} at {req.startTime} - {req.endTime}
+                  </Text>
                 </View>
 
                 <View style={styles.priceRow}>
                   <Text style={styles.priceLabel}>Estimated Payment</Text>
-                  <Text style={styles.priceVal}>{req.price}</Text>
+                  <Text style={styles.priceVal}>PKR {req.estimatedPrice}</Text>
                 </View>
 
                 <View style={styles.btnRow}>
@@ -119,12 +154,12 @@ export const HzProviderInboxScreen: React.FC<HzProviderInboxScreenProps> = ({
                     label="Decline"
                     variant="secondary"
                     style={{ flex: 1, height: 42 }}
-                    onPress={() => handleDecline(req.id)}
+                    onPress={() => handleDecline(req)}
                   />
                   <HzButton
                     label="Accept Request"
                     style={{ flex: 1, height: 42, backgroundColor: COLORS.green }}
-                    onPress={() => handleAccept(req.id)}
+                    onPress={() => handleAccept(req)}
                   />
                 </View>
               </HzCard>
@@ -136,22 +171,40 @@ export const HzProviderInboxScreen: React.FC<HzProviderInboxScreenProps> = ({
               <Text style={styles.emptySubtitle}>No pending booking requests right now.</Text>
             </View>
           )
+        ) : activeBookings.length > 0 ? (
+          activeBookings.map((b) => (
+            <HzCard key={b.id} style={styles.card}>
+              <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+                <Text style={styles.cardCode}>{b.bookingCode} • {b.serviceCategory}</Text>
+                <Text
+                  style={{
+                    fontSize: 11,
+                    fontWeight: "700",
+                    color: b.status === "IN_PROGRESS" ? COLORS.navy : COLORS.green,
+                  }}
+                >
+                  {b.status}
+                </Text>
+              </View>
+              <Text style={styles.customerText}>
+                Customer: {b.customer?.fullName || "Zain Khan"}
+              </Text>
+              <Text style={{ fontSize: 12, color: "#161533", fontWeight: "600", marginTop: 4 }}>
+                📅 {String(b.appointmentDate).slice(0, 10)} at {b.startTime} - {b.endTime}
+              </Text>
+              <HzButton
+                label="Manage Job & Update Status →"
+                style={{ marginTop: 12, height: 40 }}
+                onPress={() => onJobAccepted(b)}
+              />
+            </HzCard>
+          ))
         ) : (
-          <HzCard style={styles.card}>
-            <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-              <Text style={styles.cardCode}>BK-1001 • Plumbing Service</Text>
-              <Text style={{ fontSize: 11, fontWeight: "700", color: COLORS.green }}>SCHEDULED</Text>
-            </View>
-            <Text style={styles.customerText}>Customer: Zain Khan • F-7/2 Islamabad</Text>
-            <Text style={{ fontSize: 12, color: "#161533", fontWeight: "600", marginTop: 4 }}>
-              📅 Tomorrow at 10:00 AM - 11:00 AM
-            </Text>
-            <HzButton
-              label="Open Active Job View →"
-              style={{ marginTop: 12, height: 40 }}
-              onPress={onJobAccepted}
-            />
-          </HzCard>
+          <View style={styles.emptyState}>
+            <Clock size={44} color="#9B9B9B" />
+            <Text style={styles.emptyTitle}>No Active Jobs</Text>
+            <Text style={styles.emptySubtitle}>You don't have any scheduled jobs currently.</Text>
+          </View>
         )}
       </ScrollView>
     </View>
