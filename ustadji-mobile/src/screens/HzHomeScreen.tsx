@@ -8,6 +8,7 @@ import {
   Image,
 } from "react-native";
 import {
+  ArrowLeft,
   Search,
   Wrench,
   Zap,
@@ -27,6 +28,7 @@ import { HzCard, HzButton } from "../components/HzPrimitives";
 
 interface HomeScreenProps {
   onNavigate: (screen: string) => void;
+  onBack?: () => void;
 }
 
 const CATEGORIES = [
@@ -63,12 +65,18 @@ const FEATURED_USTADS = [
   },
 ];
 
-export const HzHomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
+export const HzHomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, onBack }) => {
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      {/* HEADER */}
+      {/* HEADER WITH BACK BUTTON */}
       <View style={styles.header}>
-        <View>
+        <TouchableOpacity
+          onPress={() => (onBack ? onBack() : onNavigate("role_selection"))}
+          style={styles.backBtn}
+        >
+          <ArrowLeft size={22} color={COLORS.navy} />
+        </TouchableOpacity>
+        <View style={{ flex: 1 }}>
           <Text style={styles.greetingText}>Assalam-o-Alaikum, Zain! 👋</Text>
           <Text style={styles.locationText}>📍 F-7/2, Islamabad</Text>
         </View>
@@ -208,17 +216,24 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 16,
+    gap: 8,
+  },
+  backBtn: {
+    padding: 6,
+    borderRadius: 20,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E8E3DB",
   },
   greetingText: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: "700",
     color: COLORS.navy,
   },
   locationText: {
-    fontSize: 13,
+    fontSize: 12,
     color: COLORS.textSecondary,
     marginTop: 2,
   },

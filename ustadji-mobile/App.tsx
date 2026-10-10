@@ -98,7 +98,7 @@ export default function App() {
                 <Text style={styles.signOutText}>Sign Out</Text>
               </TouchableOpacity>
             </View>
-            <HzAdminDashboardScreen onNavigate={(s) => {}} />
+            <HzAdminDashboardScreen onNavigate={(s) => setCurrentScreen("login")} />
           </View>
         );
 
@@ -254,11 +254,13 @@ export default function App() {
               <>
                 {activeTab === "explore" && (
                   <HzHomeScreen
+                    onBack={() => setCurrentScreen("login")}
                     onNavigate={(screen) => {
                       if (screen === "ai_chat") setCurrentScreen("chat");
                       else if (screen === "issue_capture") setCurrentScreen("issue-capture");
                       else if (screen === "explore") setCurrentScreen("provider-results");
                       else if (screen === "provider_profile") setCurrentScreen("provider-results");
+                      else if (screen === "role_selection") setCurrentScreen("login");
                     }}
                   />
                 )}
@@ -331,6 +333,7 @@ export default function App() {
                 {activeTab === "dashboard" && (
                   <HzProviderDashboardScreen
                     currentUser={currentUser}
+                    onBack={() => setCurrentScreen("login")}
                     onViewJob={(b) => {
                       if (b) setCurrentBooking(b);
                       setCurrentScreen("provider-active-job");

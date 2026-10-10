@@ -8,6 +8,7 @@ import {
   Alert,
 } from "react-native";
 import {
+  ArrowLeft,
   LayoutDashboard,
   Users,
   ShieldAlert,
@@ -79,9 +80,12 @@ export const HzAdminDashboardScreen: React.FC<{ onNavigate: (s: string) => void 
 
   return (
     <ScrollView style={styles.container}>
-      {/* ADMIN HEADER */}
+      {/* ADMIN HEADER WITH BACK BUTTON */}
       <View style={styles.header}>
-        <View>
+        <TouchableOpacity onPress={() => onNavigate("login")} style={{ padding: 6, borderRadius: 20, backgroundColor: "#FFFFFF", borderWidth: 1, borderColor: "#E8E3DB", marginRight: 8 }}>
+          <ArrowLeft size={22} color={COLORS.navy} />
+        </TouchableOpacity>
+        <View style={{ flex: 1 }}>
           <Text style={styles.title}>Admin Operations Center</Text>
           <Text style={styles.subtitle}>UstadJi Platform Control & Mediation Hub</Text>
         </View>
