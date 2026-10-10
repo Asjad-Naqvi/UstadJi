@@ -165,13 +165,14 @@ export const api = {
 
   async updateBookingStatus(
     bookingId: string,
-    status: "IN_PROGRESS" | "COMPLETED" | "CANCELLED",
-    reason?: string
+    status: "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "DISPUTED",
+    reason?: string,
+    changedBy?: "CUSTOMER" | "PROVIDER" | "ADMIN"
   ) {
     const res = await fetch(`${API_BASE_URL}/bookings/${bookingId}/status`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status, reason }),
+      body: JSON.stringify({ status, reason, changedBy }),
     });
     if (!res.ok) {
       const err = await res.json();

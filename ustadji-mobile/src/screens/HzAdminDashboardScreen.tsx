@@ -1,10 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
   ScrollView,
   TouchableOpacity,
   StyleSheet,
+  Alert,
 } from "react-native";
 import {
   LayoutDashboard,
@@ -20,6 +21,7 @@ import {
 } from "lucide-react-native";
 import { COLORS } from "../theme/theme";
 import { HzCard, HzButton } from "../components/HzPrimitives";
+import { api } from "../services/api";
 
 type AdminTab = "dashboard" | "users" | "disputes" | "monitoring";
 
@@ -27,31 +29,52 @@ export const HzAdminDashboardScreen: React.FC<{ onNavigate: (s: string) => void 
   onNavigate,
 }) => {
   const [activeTab, setActiveTab] = useState<AdminTab>("dashboard");
+  const [disputesList, setDisputesList] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    loadDisputes();
+  }, []);
+
+  const loadDisputes = async () => {
+    try {
+      setLoading(true);
+      const data = await api.getBookings(undefined, undefined, "DISPUTED");
+      setDisputesList(data || []);
+    } catch (e) {
+      console.warn("Error loading disputed bookings:", e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAdminResolve = async (bookingId: string, resolution: "COMPLETED" | "CANCELLED") => {
+    try {
+      setLoading(true);
+      const note = resolution === "COMPLETED"
+        ? "Admin Resolution: Dispute settled in favor of Provider (Payout released)"
+        : "Admin Resolution: Dispute settled in favor of Customer (Refund issued)";
+
+      await api.updateBookingStatus(bookingId, resolution, note, "ADMIN");
+      Alert.alert(
+        "Dispute Resolved ✓",
+        resolution === "COMPLETED"
+          ? "Case closed: Payout released to provider."
+          : "Case closed: Customer refunded & booking cancelled."
+      );
+      loadDisputes();
+    } catch (e) {
+      Alert.alert("Error Resolving Dispute", (e as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const stats = [
     { title: "Total Bookings", val: "1,420", change: "+14.2%", icon: TrendingUp, color: COLORS.green },
-    { title: "Active Disputes", val: "3", change: "Requires review", icon: ShieldAlert, color: COLORS.orange },
+    { title: "Active Disputes", val: String(disputesList.length), change: "Requires review", icon: ShieldAlert, color: COLORS.orange },
     { title: "Ustads Online", val: "84 Ustads", change: "Islamabad / Rwp", icon: Users, color: COLORS.navy },
     { title: "Today Revenue", val: "PKR 148.5K", change: "+18%", icon: DollarSign, color: COLORS.green },
-  ];
-
-  const recentDisputes = [
-    {
-      id: "DSP-104",
-      user: "Zain Khan",
-      provider: "Ustad Tariq",
-      issue: "Price mismatch on AC Capacitor",
-      status: "OPEN",
-      time: "12 mins ago",
-    },
-    {
-      id: "DSP-103",
-      user: "Bilal Ahmad",
-      provider: "Ustad Rashid",
-      issue: "Arrival delay > 45 mins",
-      status: "UNDER REVIEW",
-      time: "1 hr ago",
-    },
   ];
 
   return (
@@ -60,11 +83,11 @@ export const HzAdminDashboardScreen: React.FC<{ onNavigate: (s: string) => void 
       <View style={styles.header}>
         <View>
           <Text style={styles.title}>Admin Operations Center</Text>
-          <Text style={styles.subtitle}>UstadJi Platform Control & AI Governance</Text>
+          <Text style={styles.subtitle}>UstadJi Platform Control & Mediation Hub</Text>
         </View>
-        <View style={styles.headerIconCircle}>
+        <TouchableOpacity style={styles.headerIconCircle} onPress={loadDisputes}>
           <Bell size={18} color={COLORS.navy} />
-        </View>
+        </TouchableOpacity>
       </View>
 
       {/* ADMIN SUB-NAV */}
@@ -80,32 +103,22 @@ export const HzAdminDashboardScreen: React.FC<{ onNavigate: (s: string) => void 
         </TouchableOpacity>
 
         <TouchableOpacity
+          style={[styles.tabBtn, activeTab === "disputes" && styles.tabBtnActive]}
+          onPress={() => setActiveTab("disputes")}
+        >
+          <ShieldAlert size={16} color={activeTab === "disputes" ? "#FFFFFF" : COLORS.navy} />
+          <Text style={[styles.tabText, activeTab === "disputes" && styles.tabTextActive]}>
+            Disputes ({disputesList.length})
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
           style={[styles.tabBtn, activeTab === "monitoring" && styles.tabBtnActive]}
           onPress={() => setActiveTab("monitoring")}
         >
           <Activity size={16} color={activeTab === "monitoring" ? "#FFFFFF" : COLORS.navy} />
           <Text style={[styles.tabText, activeTab === "monitoring" && styles.tabTextActive]}>
             Monitoring
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.tabBtn, activeTab === "disputes" && styles.tabBtnActive]}
-          onPress={() => setActiveTab("disputes")}
-        >
-          <ShieldAlert size={16} color={activeTab === "disputes" ? "#FFFFFF" : COLORS.navy} />
-          <Text style={[styles.tabText, activeTab === "disputes" && styles.tabTextActive]}>
-            Disputes (3)
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.tabBtn, activeTab === "users" && styles.tabBtnActive]}
-          onPress={() => setActiveTab("users")}
-        >
-          <Users size={16} color={activeTab === "users" ? "#FFFFFF" : COLORS.navy} />
-          <Text style={[styles.tabText, activeTab === "users" && styles.tabTextActive]}>
-            Users
           </Text>
         </TouchableOpacity>
       </View>
@@ -127,62 +140,83 @@ export const HzAdminDashboardScreen: React.FC<{ onNavigate: (s: string) => void 
         })}
       </View>
 
+      {/* DISPUTES SECTION */}
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>
+          Active Disputes Requiring Admin Resolution ({disputesList.length})
+        </Text>
+        <TouchableOpacity onPress={loadDisputes}>
+          <Text style={styles.seeAll}>Refresh</Text>
+        </TouchableOpacity>
+      </View>
+
+      {disputesList.length === 0 ? (
+        <HzCard style={styles.disputeCard}>
+          <Text style={{ fontSize: 13, color: "#666666", textAlign: "center", paddingVertical: 10 }}>
+            🎉 No open disputes! All bookings are running smoothly.
+          </Text>
+        </HzCard>
+      ) : (
+        disputesList.map((dsp) => (
+          <HzCard key={dsp.id} style={styles.disputeCard}>
+            <View style={styles.disputeHeader}>
+              <Text style={styles.disputeId}>{dsp.bookingCode || dsp.id.slice(0, 8)} • {dsp.serviceCategory}</Text>
+              <View style={styles.openBadge}>
+                <Text style={styles.openBadgeText}>DISPUTED</Text>
+              </View>
+            </View>
+
+            <Text style={styles.disputeUsers}>
+              👤 Customer: {dsp.customer?.fullName || dsp.customerId}
+            </Text>
+            <Text style={styles.disputeUsers}>
+              🛠️ Provider: {dsp.provider?.fullName || dsp.providerId}
+            </Text>
+            <Text style={styles.disputeIssue}>
+              Reason: {dsp.cancellationReason || "Dispute logged via mobile app"}
+            </Text>
+
+            {dsp.statusHistory && dsp.statusHistory.length > 0 && (
+              <Text style={{ fontSize: 11, color: "#888888", marginTop: 4 }}>
+                Last changed by: {dsp.statusHistory[0].changedBy} ({new Date(dsp.statusHistory[0].createdAt).toLocaleTimeString()})
+              </Text>
+            )}
+
+            <View style={{ gap: 8, marginTop: 12 }}>
+              <HzButton
+                label="Resolve: Release Payout to Provider"
+                style={{ backgroundColor: COLORS.green }}
+                onPress={() => handleAdminResolve(dsp.id, "COMPLETED")}
+              />
+              <HzButton
+                label="Resolve: Issue Full Refund & Cancel"
+                variant="danger"
+                onPress={() => handleAdminResolve(dsp.id, "CANCELLED")}
+              />
+            </View>
+          </HzCard>
+        ))
+      )}
+
       {/* AI SYSTEM HEALTH MONITOR */}
       <HzCard style={styles.healthCard}>
         <View style={styles.healthHeader}>
           <Activity size={20} color={COLORS.navy} />
-          <Text style={styles.healthTitle}>AI Microservices Health</Text>
+          <Text style={styles.healthTitle}>Platform Health</Text>
           <View style={styles.healthyPill}>
-            <Text style={styles.healthyPillText}>All Systems Operational</Text>
+            <Text style={styles.healthyPillText}>100% Operational</Text>
           </View>
         </View>
 
         <View style={styles.serviceRow}>
-          <Text style={styles.serviceName}>Claude Sonnet Vision AI</Text>
-          <Text style={styles.serviceMeta}>142ms latency • 99.8% precision</Text>
+          <Text style={styles.serviceName}>Dispute Settlement Engine</Text>
+          <Text style={styles.serviceMeta}>Escrow lock active</Text>
         </View>
-
         <View style={styles.serviceRow}>
-          <Text style={styles.serviceName}>Whisper Voice Transcription</Text>
-          <Text style={styles.serviceMeta}>Urdu/English switcher active</Text>
-        </View>
-
-        <View style={styles.serviceRow}>
-          <Text style={styles.serviceName}>Groq LLaMA NLU Agent</Text>
-          <Text style={styles.serviceMeta}>85 requests/min • 0 failures</Text>
+          <Text style={styles.serviceName}>NestJS Backend API</Text>
+          <Text style={styles.serviceMeta}>Port 4000 • Connected</Text>
         </View>
       </HzCard>
-
-      {/* DISPUTES SECTION */}
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Active Disputes requiring Admin Action</Text>
-        <TouchableOpacity>
-          <Text style={styles.seeAll}>View All</Text>
-        </TouchableOpacity>
-      </View>
-
-      {recentDisputes.map((dsp) => (
-        <HzCard key={dsp.id} style={styles.disputeCard}>
-          <View style={styles.disputeHeader}>
-            <Text style={styles.disputeId}>{dsp.id}</Text>
-            <View style={styles.openBadge}>
-              <Text style={styles.openBadgeText}>{dsp.status}</Text>
-            </View>
-          </View>
-
-          <Text style={styles.disputeUsers}>
-            {dsp.user} (Customer) ↔ {dsp.provider} (Provider)
-          </Text>
-          <Text style={styles.disputeIssue}>Issue: {dsp.issue}</Text>
-          <Text style={styles.disputeTime}>{dsp.time}</Text>
-
-          <View style={styles.disputeActions}>
-            <TouchableOpacity style={styles.resolveBtn}>
-              <Text style={styles.resolveBtnText}>Open Case & Chat</Text>
-            </TouchableOpacity>
-          </View>
-        </HzCard>
-      ))}
 
       <View style={{ height: 40 }} />
     </ScrollView>
@@ -280,6 +314,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   healthCard: {
+    marginTop: 16,
     marginBottom: 20,
     gap: 10,
   },
@@ -341,6 +376,7 @@ const styles = StyleSheet.create({
   },
   disputeCard: {
     marginBottom: 12,
+    padding: 14,
   },
   disputeHeader: {
     flexDirection: "row",
@@ -374,24 +410,5 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: COLORS.textSecondary,
     marginBottom: 4,
-  },
-  disputeTime: {
-    fontSize: 10,
-    color: COLORS.textMuted,
-    marginBottom: 10,
-  },
-  disputeActions: {
-    flexDirection: "row",
-  },
-  resolveBtn: {
-    backgroundColor: COLORS.navy,
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 12,
-  },
-  resolveBtnText: {
-    color: "#FFFFFF",
-    fontSize: 11,
-    fontWeight: "600",
   },
 });
