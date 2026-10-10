@@ -272,9 +272,15 @@ export default function App() {
                 )}
                 {activeTab === "bookings" && (
                   <HzBookingScheduleScreen
+                    currentUser={currentUser}
                     onNavigate={(screen) => {
-                      if (screen === "home") setActiveTab("explore");
+                      if (screen === "home" || screen === "explore") setActiveTab("explore");
                       else if (screen === "bookings") setActiveTab("bookings");
+                      else setCurrentScreen(screen);
+                    }}
+                    onSelectBooking={(b, screenName) => {
+                      if (b) setCurrentBooking(b);
+                      setCurrentScreen(screenName);
                     }}
                   />
                 )}
@@ -301,10 +307,12 @@ export default function App() {
                     <Text style={styles.tabHeading}>Consumer Profile</Text>
                     <HzCard style={styles.profileCard}>
                       <View style={styles.avatar}>
-                        <Text style={styles.avatarText}>Z</Text>
+                        <Text style={styles.avatarText}>
+                          {currentUser?.fullName ? currentUser.fullName.charAt(0) : "Z"}
+                        </Text>
                       </View>
-                      <Text style={styles.profileName}>Zain Khan</Text>
-                      <Text style={styles.profileMeta}>zain@ustadji.pk • +92 300 5551234</Text>
+                      <Text style={styles.profileName}>{currentUser?.fullName || "Zain Khan"}</Text>
+                      <Text style={styles.profileMeta}>{currentUser?.email || "zain@ustadji.pk"} • {currentUser?.phone || "+92 300 5551234"}</Text>
                       <Text style={styles.profileSector}>📍 Sector F-7/2, Islamabad</Text>
 
                       <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
@@ -322,14 +330,18 @@ export default function App() {
               <>
                 {activeTab === "dashboard" && (
                   <HzProviderDashboardScreen
-                    onViewJob={() => setCurrentScreen("provider-active-job")}
+                    currentUser={currentUser}
+                    onViewJob={(b) => {
+                      if (b) setCurrentBooking(b);
+                      setCurrentScreen("provider-active-job");
+                    }}
                     onViewInbox={() => setActiveTab("inbox")}
                     onViewDemandMap={() => {}}
                   />
                 )}
                 {activeTab === "inbox" && (
                   <HzProviderInboxScreen
-                    providerId={currentUser?.id || "18cc5f37-d760-4bdc-a2fe-f6d49c61d54b"}
+                    providerId={currentUser?.id || "1e1a0343-e483-47f4-bdb3-7e120017ce84"}
                     onBack={() => setActiveTab("dashboard")}
                     onJobAccepted={(b) => {
                       if (b) setCurrentBooking(b);
