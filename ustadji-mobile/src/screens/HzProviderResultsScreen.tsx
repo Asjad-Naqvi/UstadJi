@@ -11,79 +11,21 @@ import { ArrowLeft, Star, ShieldCheck, MapPin, Zap, Clock, Info } from "lucide-r
 import { COLORS } from "../theme/theme";
 import { HzButton, HzCard } from "../components/HzPrimitives";
 
+import { api } from "../services/api";
+
 interface HzProviderResultsScreenProps {
   onBack: () => void;
   onViewProfile: (provider: any) => void;
   onBookProvider: (provider: any) => void;
 }
 
-const PROVIDERS = [
-  {
-    id: "18cc5f37-d760-4bdc-a2fe-f6d49c61d54b",
-    name: "Ustad Tariq Mehmood",
-    trade: "Master Plumber",
-    rating: 4.9,
-    reviews: 128,
-    rate: 800,
-    sector: "F-7/2, Islamabad (0.8 km)",
-    experience: "12 yrs exp",
-    preference: "MANUAL_APPROVAL",
-    avatar: "https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=150&auto=format&fit=crop&q=80",
-    verified: true,
-  },
-  {
-    id: "d3004a5f-d974-4d78-8e6c-698d524b5fd5",
-    name: "Ustad Rashid Ali",
-    trade: "HVAC & AC Expert",
-    rating: 4.8,
-    reviews: 94,
-    rate: 1000,
-    sector: "G-11/1, Islamabad (1.8 km)",
-    experience: "9 yrs exp",
-    preference: "AUTO_CONFIRM",
-    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
-    verified: true,
-  },
-  {
-    id: "5ff5cf77-26dd-4ed9-902c-3c4507bc0cec",
-    name: "Ustad Bilal Ahmad",
-    trade: "Master Electrician",
-    rating: 4.9,
-    reviews: 76,
-    rate: 750,
-    sector: "F-6, Islamabad (1.4 km)",
-    experience: "7 yrs exp",
-    preference: "MANUAL_APPROVAL",
-    avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80",
-    verified: true,
-  },
-  {
-    id: "aslam-carpenter-profile-id",
-    name: "Ustad Muhammad Aslam",
-    trade: "Master Carpenter & Woodwork",
-    rating: 4.8,
-    reviews: 112,
-    rate: 900,
-    sector: "I-8, Islamabad (2.1 km)",
-    experience: "15 yrs exp",
-    preference: "MANUAL_APPROVAL",
-    avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80",
-    verified: true,
-  },
-  {
-    id: "noman-painter-profile-id",
-    name: "Ustad Noman Qureshi",
-    trade: "Painter & Finishing Specialist",
-    rating: 4.7,
-    reviews: 65,
-    rate: 700,
-    sector: "F-7, Islamabad (0.9 km)",
-    experience: "8 yrs exp",
-    preference: "AUTO_CONFIRM",
-    avatar: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&auto=format&fit=crop&q=80",
-    verified: true,
-  },
-];
+const DEFAULT_AVATARS: Record<string, string> = {
+  "tariq@ustadji.pk": "https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=150&auto=format&fit=crop&q=80",
+  "rashid@ustadji.pk": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
+  "bilal@ustadji.pk": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80",
+  "aslam@ustadji.pk": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80",
+  "noman@ustadji.pk": "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&auto=format&fit=crop&q=80",
+};
 
 export const HzProviderResultsScreen: React.FC<HzProviderResultsScreenProps> = ({
   onBack,
@@ -91,6 +33,39 @@ export const HzProviderResultsScreen: React.FC<HzProviderResultsScreenProps> = (
   onBookProvider,
 }) => {
   const [activeFilter, setActiveFilter] = useState("All");
+  const [providers, setProviders] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  React.useEffect(() => {
+    loadProviders();
+  }, []);
+
+  const loadProviders = async () => {
+    try {
+      setLoading(true);
+      const data = await api.getProviders();
+      if (Array.isArray(data) && data.length > 0) {
+        const formatted = data.map((p) => ({
+          id: p.id,
+          name: p.fullName,
+          trade: p.providerProfile?.trade || "Service Professional",
+          rating: p.providerProfile?.rating || 4.9,
+          reviews: p.providerProfile?.reviewCount || 98,
+          rate: p.providerProfile?.hourlyRate || 800,
+          sector: p.providerProfile?.sectorsCovered || "Islamabad",
+          experience: `${p.providerProfile?.experienceYears || 8} yrs exp`,
+          preference: p.providerProfile?.bookingPreference || "MANUAL_APPROVAL",
+          avatar: DEFAULT_AVATARS[p.email] || "https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=150&auto=format&fit=crop&q=80",
+          verified: true,
+        }));
+        setProviders(formatted);
+      }
+    } catch (e) {
+      console.warn("Could not load live providers from API:", e);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filters = ["All", "Top Rated", "Plumber", "AC Service", "Electrician"];
 
@@ -134,7 +109,7 @@ export const HzProviderResultsScreen: React.FC<HzProviderResultsScreenProps> = (
           </Text>
         </View>
 
-        {PROVIDERS.map((p) => {
+        {providers.map((p) => {
           const isAuto = p.preference === "AUTO_CONFIRM";
 
           return (
