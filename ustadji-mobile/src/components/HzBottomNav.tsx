@@ -1,38 +1,48 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
-import { Home, Search, CalendarDays, User, Bot, LayoutDashboard } from "lucide-react-native";
+import { MessageCircle, Search, Clock, Heart, User, LayoutDashboard, Inbox, Shield } from "lucide-react-native";
 import { COLORS } from "../theme/theme";
 
-export type HzNavTabId = "home" | "ai_chat" | "explore" | "bookings" | "profile" | "admin";
+export type ConsumerTabId = "chat" | "explore" | "bookings" | "favourites" | "profile";
+export type ProviderTabId = "dashboard" | "inbox" | "profile";
 
 interface HzBottomNavProps {
-  activeTab: HzNavTabId;
-  onTabChange: (id: HzNavTabId) => void;
-  userRole?: "consumer" | "provider" | "admin";
+  role: "consumer" | "provider" | "admin";
+  activeTab: string;
+  onTabChange: (tabId: string) => void;
 }
 
 export const HzBottomNav: React.FC<HzBottomNavProps> = ({
+  role,
   activeTab,
   onTabChange,
-  userRole = "consumer",
 }) => {
-  const tabs = [
-    { id: "home" as HzNavTabId, Icon: Home, label: "Home" },
-    { id: "ai_chat" as HzNavTabId, Icon: Bot, label: "AI Agent" },
-    { id: "explore" as HzNavTabId, Icon: Search, label: "Explore" },
-    { id: "bookings" as HzNavTabId, Icon: CalendarDays, label: "Bookings" },
-    { id: "profile" as HzNavTabId, Icon: User, label: "Profile" },
+  const consumerTabs = [
+    { id: "chat", label: "Chat", Icon: MessageCircle },
+    { id: "explore", label: "Explore", Icon: Search },
+    { id: "bookings", label: "Bookings", Icon: Clock },
+    { id: "favourites", label: "Favourites", Icon: Heart },
+    { id: "profile", label: "Profile", Icon: User },
   ];
 
-  if (userRole === "admin") {
-    tabs[0] = { id: "admin" as HzNavTabId, Icon: LayoutDashboard, label: "Admin" };
-  }
+  const providerTabs = [
+    { id: "dashboard", label: "Dashboard", Icon: LayoutDashboard },
+    { id: "inbox", label: "Inbox", Icon: Inbox },
+    { id: "profile", label: "Profile", Icon: User },
+  ];
+
+  const adminTabs = [
+    { id: "dashboard", label: "Overview", Icon: LayoutDashboard },
+    { id: "profile", label: "Admin Profile", Icon: Shield },
+  ];
+
+  const tabs = role === "provider" ? providerTabs : role === "admin" ? adminTabs : consumerTabs;
 
   return (
     <View style={styles.container}>
-      {tabs.map(({ id, Icon, label }) => {
+      {tabs.map(({ id, label, Icon }) => {
         const isActive = id === activeTab;
-        const color = isActive ? COLORS.navy : "#9B9B9B";
+        const color = isActive ? "#161533" : "#9B9B9B";
 
         return (
           <TouchableOpacity
@@ -42,7 +52,12 @@ export const HzBottomNav: React.FC<HzBottomNavProps> = ({
             style={styles.tabButton}
           >
             <Icon size={22} color={color} />
-            <Text style={[styles.label, { color, fontWeight: isActive ? "600" : "400" }]}>
+            <Text
+              style={[
+                styles.label,
+                { color, fontWeight: isActive ? "600" : "400" },
+              ]}
+            >
               {label}
             </Text>
             {isActive && <View style={styles.activeDot} />}
@@ -58,7 +73,7 @@ const styles = StyleSheet.create({
     height: 64,
     backgroundColor: "#FFFFFF",
     borderTopWidth: 1,
-    borderTopColor: "#E8E3DB",
+    borderTopColor: "#EFEFEF",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-around",
@@ -76,14 +91,14 @@ const styles = StyleSheet.create({
     gap: 3,
   },
   label: {
-    fontSize: 11,
+    fontSize: 10,
     fontFamily: "System",
   },
   activeDot: {
     width: 4,
     height: 4,
     borderRadius: 2,
-    backgroundColor: COLORS.navy,
+    backgroundColor: "#161533",
     marginTop: 1,
   },
 });
