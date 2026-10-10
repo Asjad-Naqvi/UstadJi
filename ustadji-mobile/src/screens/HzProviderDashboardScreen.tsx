@@ -7,7 +7,7 @@ import {
   StyleSheet,
   Switch,
 } from "react-native";
-import { Bell, Map, ChevronRight, Clock, DollarSign, CheckCircle2, TrendingUp, AlertCircle } from "lucide-react-native";
+import { ArrowLeft, Bell, Map, ChevronRight, Clock, DollarSign, CheckCircle2, TrendingUp, AlertCircle } from "lucide-react-native";
 import { COLORS } from "../theme/theme";
 import { HzButton, HzCard } from "../components/HzPrimitives";
 
@@ -17,6 +17,7 @@ interface HzProviderDashboardScreenProps {
   onViewJob: (booking?: any) => void;
   onViewInbox: () => void;
   onViewDemandMap: () => void;
+  onBack?: () => void;
   currentUser?: any;
 }
 
@@ -24,6 +25,7 @@ export const HzProviderDashboardScreen: React.FC<HzProviderDashboardScreenProps>
   onViewJob,
   onViewInbox,
   onViewDemandMap,
+  onBack,
   currentUser,
 }) => {
   const [isAvailable, setIsAvailable] = useState(true);
@@ -87,9 +89,14 @@ export const HzProviderDashboardScreen: React.FC<HzProviderDashboardScreenProps>
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {/* Provider Header */}
+      {/* Provider Header WITH BACK BUTTON */}
       <View style={styles.header}>
-        <View>
+        {onBack && (
+          <TouchableOpacity onPress={onBack} style={styles.backBtn}>
+            <ArrowLeft size={22} color={COLORS.navy} />
+          </TouchableOpacity>
+        )}
+        <View style={{ flex: 1 }}>
           <Text style={styles.providerName}>{providerName}</Text>
           <Text style={styles.providerTrade}>Verified Service Provider • Islamabad</Text>
         </View>
@@ -225,6 +232,14 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 16,
+  },
+  backBtn: {
+    padding: 6,
+    borderRadius: 20,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E8E3DB",
+    marginRight: 8,
   },
   providerName: {
     fontSize: 20,
