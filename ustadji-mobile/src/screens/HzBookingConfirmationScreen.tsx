@@ -38,20 +38,44 @@ export const HzBookingConfirmationScreen: React.FC<HzBookingConfirmationScreenPr
   const handleConfirm = async () => {
     try {
       setLoading(true);
-      const customerId = currentUser?.id || "1aaf561c-c519-49a1-8762-8a8fb540aa4b"; // default Zain
-      const providerId = selectedProvider?.id || "18cc5f37-d760-4bdc-a2fe-f6d49c61d54b"; // default Tariq
+      // Valid fallback IDs from current database seed if not provided
+      const customerId = currentUser?.id || "4d7638cf-0963-44c6-8937-1933101b9969"; // Zain Khan
+      const providerId = selectedProvider?.id || "1e1a0343-e483-47f4-bdb3-7e120017ce84"; // Ustad Tariq
 
-      // Next day date string
-      const tomorrowStr = new Date(Date.now() + 86400000).toISOString().split("T")[0];
+      // Parse appointment date
+      let apptDateStr = new Date(Date.now() + 86400000).toISOString().split("T")[0];
+      if (selectedDate && selectedDate.includes("-") && selectedDate.length === 10) {
+        apptDateStr = selectedDate;
+      }
+
+      // Parse 24h time strings from selectedTime (e.g. "10:00 AM - 11:00 AM" or "02:30 PM")
+      let startTime = "10:00";
+      let endTime = "11:00";
+
+      if (selectedTime) {
+        const parts = selectedTime.split("-").map((s) => s.trim());
+        if (parts[0]) {
+          const match = parts[0].match(/(\d{1,2}):?(\d{2})?\s*(AM|PM)?/i);
+          if (match) {
+            let h = parseInt(match[1], 10);
+            const m = match[2] || "00";
+            const period = match[3] ? match[3].toUpperCase() : null;
+            if (period === "PM" && h < 12) h += 12;
+            if (period === "AM" && h === 12) h = 0;
+            startTime = `${String(h).padStart(2, "0")}:${m}`;
+            endTime = `${String(h + 1).padStart(2, "0")}:${m}`;
+          }
+        }
+      }
 
       const res = await api.createBooking({
         customerId,
         providerId,
         serviceCategory: selectedProvider?.trade?.split("•")[0]?.trim() || "Plumbing",
         issueDescription: "Scheduled repair booking via App",
-        appointmentDate: tomorrowStr,
-        startTime: "10:00",
-        endTime: "11:00",
+        appointmentDate: apptDateStr,
+        startTime,
+        endTime,
         estimatedPrice: hourlyRate,
       });
 

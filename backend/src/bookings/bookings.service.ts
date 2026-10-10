@@ -156,22 +156,46 @@ export class BookingsService {
    * 3. Starts 30-min response window if manual approval
    */
   async createBooking(dto: CreateBookingDto) {
-    // 1. Attempt to acquire temporary slot lock
-    const { success, lockKey } = await this.slotLockService.acquireSlotLock(
-      dto.providerId,
-      dto.appointmentDate,
-      dto.startTime,
-      300 // 5-minute temporary lock while completing reservation
-    );
+    const cleanDateStr = new Date(dto.appointmentDate).toISOString().split("T")[0];
 
-    if (!success) {
-      throw new ConflictException(
-        "This time slot is temporarily reserved by another customer. Please choose another slot."
-      );
+    // 1. Check if an active booking already exists in DB for this provider & slot
+    const startOfDay = new Date(cleanDateStr);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(cleanDateStr);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const existingBooking = await this.prisma.booking.findFirst({
+      where: {
+        providerId: dto.providerId,
+        appointmentDate: { gte: startOfDay, lte: endOfDay },
+        startTime: dto.startTime,
+        status: { in: ["PENDING_ACCEPTANCE", "SCHEDULED", "IN_PROGRESS"] },
+      },
+    });
+
+    if (existingBooking) {
+      throw new ConflictException("This time slot is already booked. Please choose another time slot.");
     }
 
+    // 2. Attempt to acquire temporary slot lock
+    let lockRes = await this.slotLockService.acquireSlotLock(
+      dto.providerId,
+      cleanDateStr,
+      dto.startTime,
+      300
+    );
+
+    // If lock failed but NO active booking exists in DB, release stale memory lock and retry
+    if (!lockRes.success) {
+      this.logger.warn(`Clearing stale slot lock for ${dto.providerId} on ${cleanDateStr} at ${dto.startTime}`);
+      await this.slotLockService.releaseSlotLock(this.slotLockService.getLockKey(dto.providerId, cleanDateStr, dto.startTime));
+      lockRes = await this.slotLockService.acquireSlotLock(dto.providerId, cleanDateStr, dto.startTime, 300);
+    }
+
+    const lockKey = lockRes.lockKey;
+
     try {
-      // 2. Fetch provider & preferences
+      // 3. Fetch provider & preferences
       const provider = await this.prisma.user.findUnique({
         where: { id: dto.providerId },
         include: { providerProfile: true },
@@ -188,9 +212,9 @@ export class BookingsService {
         : new Date(Date.now() + 30 * 60 * 1000); // 30-minute response window
 
       const bookingCode = `BK-${Math.floor(1000 + Math.random() * 9000)}`;
-      const appointmentDate = new Date(dto.appointmentDate);
+      const appointmentDate = new Date(cleanDateStr);
 
-      // 3. Save booking record in PostgreSQL / SQLite
+      // 4. Save booking record in PostgreSQL / SQLite
       const booking = await this.prisma.booking.create({
         data: {
           bookingCode,
@@ -222,6 +246,9 @@ export class BookingsService {
           statusHistory: true,
         },
       });
+
+      // Release temporary lock now that DB record exists
+      await this.slotLockService.releaseSlotLock(lockKey);
 
       // 4. Handle confirmation vs 30-min provider response timer
       if (isAutoConfirm) {

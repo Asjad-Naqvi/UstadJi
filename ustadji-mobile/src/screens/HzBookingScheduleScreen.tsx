@@ -94,8 +94,7 @@ export const HzBookingScheduleScreen: React.FC<{ onNavigate: (s: string) => void
       setLoading(true);
       setErrorMsg(null);
 
-      // Dummy customer Zain Khan ID
-      const customerId = "1aaf561c-c519-49a1-8762-8a8fb540aa4b";
+      const customerId = "4d7638cf-0963-44c6-8937-1933101b9969"; // Valid Zain Khan UUID
 
       const res = await api.createBooking({
         customerId,
