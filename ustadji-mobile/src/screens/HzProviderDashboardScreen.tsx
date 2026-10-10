@@ -11,30 +11,68 @@ import { Bell, Map, ChevronRight, Clock, DollarSign, CheckCircle2, TrendingUp, A
 import { COLORS } from "../theme/theme";
 import { HzButton, HzCard } from "../components/HzPrimitives";
 
+import { api } from "../services/api";
+
 interface HzProviderDashboardScreenProps {
-  onViewJob: () => void;
+  onViewJob: (booking?: any) => void;
   onViewInbox: () => void;
   onViewDemandMap: () => void;
+  currentUser?: any;
 }
 
 export const HzProviderDashboardScreen: React.FC<HzProviderDashboardScreenProps> = ({
   onViewJob,
   onViewInbox,
   onViewDemandMap,
+  currentUser,
 }) => {
   const [isAvailable, setIsAvailable] = useState(true);
+  const [pendingRequests, setPendingRequests] = useState<any[]>([]);
+  const [activeJob, setActiveJob] = useState<any | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const providerId = currentUser?.id || "1e1a0343-e483-47f4-bdb3-7e120017ce84";
+  const providerName = currentUser?.fullName || "Ustad Tariq Mehmood";
+
+  React.useEffect(() => {
+    fetchDashboardData();
+  }, [providerId]);
+
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      const pending = await api.getBookings(undefined, providerId, "PENDING_ACCEPTANCE");
+      setPendingRequests(pending);
+
+      const inProgress = await api.getBookings(undefined, providerId, "IN_PROGRESS");
+      const scheduled = await api.getBookings(undefined, providerId, "SCHEDULED");
+      if (inProgress.length > 0) {
+        setActiveJob(inProgress[0]);
+      } else if (scheduled.length > 0) {
+        setActiveJob(scheduled[0]);
+      } else {
+        setActiveJob(null);
+      }
+    } catch (e) {
+      console.warn("Could not load provider dashboard data:", e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const latestPending = pendingRequests[0];
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       {/* Provider Header */}
       <View style={styles.header}>
         <View>
-          <Text style={styles.providerName}>Ustad Tariq Mehmood</Text>
-          <Text style={styles.providerTrade}>Master Plumber • Sector F-7, Islamabad</Text>
+          <Text style={styles.providerName}>{providerName}</Text>
+          <Text style={styles.providerTrade}>Verified Service Provider • Islamabad</Text>
         </View>
         <TouchableOpacity style={styles.bellBtn} onPress={onViewInbox}>
           <Bell size={20} color={COLORS.navy} />
-          <View style={styles.notificationDot} />
+          {pendingRequests.length > 0 && <View style={styles.notificationDot} />}
         </TouchableOpacity>
       </View>
 
@@ -61,13 +99,13 @@ export const HzProviderDashboardScreen: React.FC<HzProviderDashboardScreenProps>
       {/* Stats Row */}
       <View style={styles.statsGrid}>
         <View style={styles.statTile}>
-          <Text style={styles.statVal}>PKR 14,800</Text>
-          <Text style={styles.statLabel}>Weekly Earnings</Text>
+          <Text style={styles.statVal}>{pendingRequests.length}</Text>
+          <Text style={styles.statLabel}>Pending Req</Text>
         </View>
 
         <View style={styles.statTile}>
-          <Text style={styles.statVal}>18</Text>
-          <Text style={styles.statLabel}>Completed Jobs</Text>
+          <Text style={styles.statVal}>{activeJob ? 1 : 0}</Text>
+          <Text style={styles.statLabel}>Active Jobs</Text>
         </View>
 
         <View style={styles.statTile}>
@@ -77,22 +115,33 @@ export const HzProviderDashboardScreen: React.FC<HzProviderDashboardScreenProps>
       </View>
 
       {/* NEW REQUEST ALERT CARD (MODULE 5) */}
-      <HzCard style={styles.alertCard} onPress={onViewInbox}>
-        <View style={styles.alertHeader}>
-          <View style={styles.newBadge}>
-            <Clock size={12} color="#FFFFFF" />
-            <Text style={styles.newBadgeText}>Action Required (30m Window)</Text>
+      {latestPending ? (
+        <HzCard style={styles.alertCard} onPress={onViewInbox}>
+          <View style={styles.alertHeader}>
+            <View style={styles.newBadge}>
+              <Clock size={12} color="#FFFFFF" />
+              <Text style={styles.newBadgeText}>Action Required (30m Window)</Text>
+            </View>
+            <Text style={styles.timerCountdown}>{latestPending.bookingCode}</Text>
           </View>
-          <Text style={styles.timerCountdown}>24:18 left</Text>
-        </View>
-        <Text style={styles.alertTitle}>New Booking Request: Plumbing Leak</Text>
-        <Text style={styles.alertDesc}>Zain Khan • House 24, Street 12, F-7/2 Islamabad</Text>
-        <Text style={styles.alertPrice}>Estimated PKR 800 • Tomorrow at 10:00 AM</Text>
+          <Text style={styles.alertTitle}>New Request: {latestPending.serviceCategory}</Text>
+          <Text style={styles.alertDesc}>
+            Customer: {latestPending.customer?.fullName || "Consumer"} • {latestPending.issueDescription}
+          </Text>
+          <Text style={styles.alertPrice}>
+            Estimated PKR {latestPending.estimatedPrice} • {String(latestPending.appointmentDate).slice(0, 10)} at {latestPending.startTime}
+          </Text>
 
-        <View style={styles.alertActionRow}>
-          <Text style={styles.openInboxText}>Tap to Accept / Decline in Inbox →</Text>
-        </View>
-      </HzCard>
+          <View style={styles.alertActionRow}>
+            <Text style={styles.openInboxText}>Tap to Accept / Decline in Inbox →</Text>
+          </View>
+        </HzCard>
+      ) : (
+        <HzCard style={{ padding: 14, marginBottom: 14, backgroundColor: "#FFFFFF" }}>
+          <Text style={{ fontSize: 13, fontWeight: "600", color: "#161533" }}>No Pending Requests</Text>
+          <Text style={{ fontSize: 11, color: "#9B9B9B", marginTop: 2 }}>You are all caught up!</Text>
+        </HzCard>
+      )}
 
       {/* DEMAND HEATMAP BANNER */}
       <TouchableOpacity
@@ -105,7 +154,7 @@ export const HzProviderDashboardScreen: React.FC<HzProviderDashboardScreenProps>
           <View style={{ flex: 1 }}>
             <Text style={styles.heatmapTitle}>High Demand Zones Active</Text>
             <Text style={styles.heatmapSub}>
-              Sector F-7 and G-11 have surge demand for Plumbers (+15% higher rate).
+              Sector F-7 and G-11 have high consumer demand.
             </Text>
           </View>
           <ChevronRight size={20} color="#FFFFFF" />
@@ -113,25 +162,27 @@ export const HzProviderDashboardScreen: React.FC<HzProviderDashboardScreenProps>
       </TouchableOpacity>
 
       {/* ACTIVE JOB BANNER */}
-      <HzCard style={{ marginTop: 14 }} onPress={onViewJob}>
-        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-          <Text style={{ fontSize: 14, fontWeight: "700", color: COLORS.navy }}>Current Ongoing Job</Text>
-          <Text style={{ fontSize: 11, fontWeight: "700", color: COLORS.navy, backgroundColor: "rgba(22, 21, 51, 0.1)", paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10 }}>
-            IN PROGRESS
+      {activeJob && (
+        <HzCard style={{ marginTop: 14 }} onPress={() => onViewJob(activeJob)}>
+          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+            <Text style={{ fontSize: 14, fontWeight: "700", color: COLORS.navy }}>Current Ongoing Job ({activeJob.bookingCode})</Text>
+            <Text style={{ fontSize: 11, fontWeight: "700", color: COLORS.navy, backgroundColor: "rgba(22, 21, 51, 0.1)", paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10 }}>
+              {activeJob.status}
+            </Text>
+          </View>
+          <Text style={{ fontSize: 13, color: "#1A1A1A", marginTop: 6, fontWeight: "600" }}>
+            {activeJob.issueDescription}
           </Text>
-        </View>
-        <Text style={{ fontSize: 13, color: "#1A1A1A", marginTop: 6, fontWeight: "600" }}>
-          Main water pipe valve leaking in kitchen
-        </Text>
-        <Text style={{ fontSize: 12, color: "#9B9B9B", marginTop: 2 }}>
-          Customer: Zain Khan • Sector F-7/2
-        </Text>
-        <HzButton
-          label="Manage Job & Generate Invoice →"
-          style={{ marginTop: 12, height: 42 }}
-          onPress={onViewJob}
-        />
-      </HzCard>
+          <Text style={{ fontSize: 12, color: "#9B9B9B", marginTop: 2 }}>
+            Customer: {activeJob.customer?.fullName || "Consumer"} • {activeJob.serviceCategory}
+          </Text>
+          <HzButton
+            label="Manage Job & Update Status →"
+            style={{ marginTop: 12, height: 42 }}
+            onPress={() => onViewJob(activeJob)}
+          />
+        </HzCard>
+      )}
 
       <View style={{ height: 30 }} />
     </ScrollView>

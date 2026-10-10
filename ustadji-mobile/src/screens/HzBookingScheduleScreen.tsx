@@ -32,9 +32,13 @@ interface Slot {
   reason?: string;
 }
 
-export const HzBookingScheduleScreen: React.FC<{ onNavigate: (s: string) => void }> = ({
-  onNavigate,
-}) => {
+export const HzBookingScheduleScreen: React.FC<{
+  onNavigate: (s: string) => void;
+  currentUser?: any;
+  onSelectBooking?: (booking: any, screenName: string) => void;
+}> = ({ onNavigate, currentUser, onSelectBooking }) => {
+  const [activeTab, setActiveTab] = useState<"my_bookings" | "book_slot">("my_bookings");
+  const [myBookings, setMyBookings] = useState<any[]>([]);
   const [providers, setProviders] = useState<any[]>([]);
   const [selectedProvider, setSelectedProvider] = useState<any>(null);
   const [selectedDate, setSelectedDate] = useState<string>(
@@ -46,17 +50,36 @@ export const HzBookingScheduleScreen: React.FC<{ onNavigate: (s: string) => void
   const [bookingSuccess, setBookingSuccess] = useState<any>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // Load providers from backend
+  const customerId = currentUser?.id || "4d7638cf-0963-44c6-8937-1933101b9969";
+
+  // Load customer bookings or providers
   useEffect(() => {
-    loadProviders();
-  }, []);
+    if (activeTab === "my_bookings") {
+      loadMyBookings();
+    } else {
+      loadProviders();
+    }
+  }, [activeTab, customerId]);
 
   // Load slots when provider or date changes
   useEffect(() => {
-    if (selectedProvider) {
+    if (activeTab === "book_slot" && selectedProvider) {
       loadSlots(selectedProvider.id, selectedDate);
     }
-  }, [selectedProvider, selectedDate]);
+  }, [selectedProvider, selectedDate, activeTab]);
+
+  const loadMyBookings = async () => {
+    try {
+      setLoading(true);
+      setErrorMsg(null);
+      const data = await api.getBookings(customerId);
+      setMyBookings(data);
+    } catch (err) {
+      setErrorMsg("Failed to load customer bookings from backend");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const loadProviders = async () => {
     try {
@@ -94,13 +117,11 @@ export const HzBookingScheduleScreen: React.FC<{ onNavigate: (s: string) => void
       setLoading(true);
       setErrorMsg(null);
 
-      const customerId = "4d7638cf-0963-44c6-8937-1933101b9969"; // Valid Zain Khan UUID
-
       const res = await api.createBooking({
         customerId,
         providerId: selectedProvider.id,
         serviceCategory: selectedProvider.providerProfile?.trade || "Home Service",
-        issueDescription: "Scheduled repair booking via Module 5 Engine",
+        issueDescription: "Scheduled repair booking via App",
         appointmentDate: selectedDate,
         startTime: selectedSlot.startTime,
         endTime: selectedSlot.endTime,
@@ -108,7 +129,6 @@ export const HzBookingScheduleScreen: React.FC<{ onNavigate: (s: string) => void
       });
 
       setBookingSuccess(res);
-      // Reload slots to reflect new lock & booking
       loadSlots(selectedProvider.id, selectedDate);
     } catch (err) {
       setErrorMsg((err as Error).message);
@@ -131,61 +151,183 @@ export const HzBookingScheduleScreen: React.FC<{ onNavigate: (s: string) => void
           <ArrowLeft size={22} color={COLORS.navy} />
         </TouchableOpacity>
         <View style={{ flex: 1 }}>
-          <Text style={styles.title}>M5: Booking & Scheduling</Text>
-          <Text style={styles.subtitle}>Real-time Availability, Slot Locking & Dispatch</Text>
+          <Text style={styles.title}>Customer Bookings & Scheduling</Text>
+          <Text style={styles.subtitle}>Track active orders & manage reservations</Text>
         </View>
       </View>
 
-      {/* SUCCESS CONFIRMATION BANNER */}
-      {bookingSuccess && (
-        <HzCard style={styles.successCard}>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 8 }}>
-            <CheckCircle size={24} color={COLORS.green} />
-            <Text style={styles.successTitle}>
-              {bookingSuccess.status === "SCHEDULED"
-                ? "Booking Confirmed! (Instant)"
-                : "Request Sent! (30-Min Window Active)"}
-            </Text>
-          </View>
-          <Text style={styles.successText}>
-            Booking Code: <Text style={{ fontWeight: "700" }}>{bookingSuccess.bookingCode}</Text>
+      {/* MODE TABS (MY BOOKINGS vs BOOK NEW SLOT) */}
+      <View style={styles.tabGroup}>
+        <TouchableOpacity
+          style={[styles.tabBtn, activeTab === "my_bookings" && styles.tabBtnActive]}
+          onPress={() => setActiveTab("my_bookings")}
+        >
+          <Text style={[styles.tabBtnText, activeTab === "my_bookings" && styles.tabBtnTextActive]}>
+            My Orders ({myBookings.length})
           </Text>
-          <Text style={styles.successText}>
-            Status: <Text style={{ fontWeight: "700", color: bookingSuccess.status === "SCHEDULED" ? COLORS.green : COLORS.orange }}>
-              {bookingSuccess.status}
-            </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.tabBtn, activeTab === "book_slot" && styles.tabBtnActive]}
+          onPress={() => setActiveTab("book_slot")}
+        >
+          <Text style={[styles.tabBtnText, activeTab === "book_slot" && styles.tabBtnTextActive]}>
+            Book New Slot (M5)
           </Text>
-          <Text style={styles.successText}>
-            Appointment: {selectedDate} at {bookingSuccess.startTime} - {bookingSuccess.endTime}
-          </Text>
-          {bookingSuccess.acceptanceDeadline && (
-            <Text style={styles.deadlineWarning}>
-              ⏳ Provider 30-minute response timer started. Will automatically expire if unanswered.
-            </Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* MY BOOKINGS LIST VIEW */}
+      {activeTab === "my_bookings" ? (
+        <View style={{ gap: 12, marginBottom: 30 }}>
+          {loading && <ActivityIndicator size="small" color={COLORS.navy} style={{ marginVertical: 20 }} />}
+
+          {errorMsg && (
+            <View style={styles.errorBox}>
+              <AlertCircle size={18} color="#DC2626" />
+              <Text style={styles.errorText}>{errorMsg}</Text>
+            </View>
           )}
 
-          <HzButton
-            label="Track In Bookings Tab"
-            onPress={() => onNavigate("bookings")}
-            style={{ marginTop: 12 }}
-          />
-        </HzCard>
-      )}
+          {!loading && myBookings.length === 0 && (
+            <HzCard style={{ padding: 24, alignItems: "center", gap: 10, marginVertical: 20 }}>
+              <Clock size={44} color="#9B9B9B" />
+              <Text style={{ fontSize: 16, fontWeight: "700", color: COLORS.navy }}>No Bookings Found</Text>
+              <Text style={{ fontSize: 12, color: COLORS.textSecondary, textAlign: "center" }}>
+                You haven't placed any service reservations yet. Select an Ustad to get started!
+              </Text>
+              <HzButton
+                label="Browse Service Providers"
+                style={{ marginTop: 10 }}
+                onPress={() => onNavigate("explore")}
+              />
+            </HzCard>
+          )}
 
-      {/* ERROR MESSAGE */}
-      {errorMsg && (
-        <View style={styles.errorBox}>
-          <AlertCircle size={18} color="#DC2626" />
-          <Text style={styles.errorText}>{errorMsg}</Text>
+          {myBookings.map((b) => {
+            const isCompleted = b.status === "COMPLETED";
+            const isPending = b.status === "PENDING_ACCEPTANCE";
+            const isScheduled = b.status === "SCHEDULED" || b.status === "IN_PROGRESS";
+
+            return (
+              <HzCard key={b.id} style={{ padding: 16 }}>
+                <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                  <Text style={{ fontSize: 15, fontWeight: "700", color: COLORS.navy }}>
+                    {b.bookingCode} • {b.serviceCategory}
+                  </Text>
+                  <View
+                    style={{
+                      paddingHorizontal: 8,
+                      paddingVertical: 3,
+                      borderRadius: 10,
+                      backgroundColor: isCompleted
+                        ? "rgba(16, 185, 129, 0.15)"
+                        : isPending
+                        ? "rgba(255, 107, 53, 0.15)"
+                        : "rgba(22, 21, 51, 0.12)",
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontSize: 10,
+                        fontWeight: "700",
+                        color: isCompleted ? COLORS.green : isPending ? COLORS.orange : COLORS.navy,
+                      }}
+                    >
+                      {b.status}
+                    </Text>
+                  </View>
+                </View>
+
+                <Text style={{ fontSize: 13, fontWeight: "600", color: "#1A1A1A", marginTop: 6 }}>
+                  {b.issueDescription}
+                </Text>
+                <Text style={{ fontSize: 12, color: "#9B9B9B", marginTop: 2 }}>
+                  Technician: {b.provider?.fullName || "Assigned Provider"}
+                </Text>
+                <Text style={{ fontSize: 12, color: COLORS.navy, fontWeight: "600", marginTop: 4 }}>
+                  📅 {String(b.appointmentDate).slice(0, 10)} at {b.startTime} - {b.endTime} • PKR {b.estimatedPrice}
+                </Text>
+
+                <View style={{ marginTop: 12 }}>
+                  {isPending && (
+                    <HzButton
+                      label="View Response Countdown →"
+                      style={{ height: 40, backgroundColor: COLORS.orange }}
+                      onPress={() => onSelectBooking && onSelectBooking(b, "awaiting")}
+                    />
+                  )}
+                  {isScheduled && (
+                    <HzButton
+                      label="Track Job Status & Location →"
+                      style={{ height: 40 }}
+                      onPress={() => onSelectBooking && onSelectBooking(b, "job-status")}
+                    />
+                  )}
+                  {isCompleted && (
+                    <HzButton
+                      label="View Itemized Invoice & Rating →"
+                      style={{ height: 40, backgroundColor: COLORS.green }}
+                      onPress={() => onSelectBooking && onSelectBooking(b, "invoice-view")}
+                    />
+                  )}
+                </View>
+              </HzCard>
+            );
+          })}
         </View>
-      )}
+      ) : (
+        <>
+          {/* SUCCESS CONFIRMATION BANNER */}
+          {bookingSuccess && (
+            <HzCard style={styles.successCard}>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 8 }}>
+                <CheckCircle size={24} color={COLORS.green} />
+                <Text style={styles.successTitle}>
+                  {bookingSuccess.status === "SCHEDULED"
+                    ? "Booking Confirmed! (Instant)"
+                    : "Request Sent! (30-Min Window Active)"}
+                </Text>
+              </View>
+              <Text style={styles.successText}>
+                Booking Code: <Text style={{ fontWeight: "700" }}>{bookingSuccess.bookingCode}</Text>
+              </Text>
+              <Text style={styles.successText}>
+                Status: <Text style={{ fontWeight: "700", color: bookingSuccess.status === "SCHEDULED" ? COLORS.green : COLORS.orange }}>
+                  {bookingSuccess.status}
+                </Text>
+              </Text>
+              <Text style={styles.successText}>
+                Appointment: {selectedDate} at {bookingSuccess.startTime} - {bookingSuccess.endTime}
+              </Text>
+              {bookingSuccess.acceptanceDeadline && (
+                <Text style={styles.deadlineWarning}>
+                  ⏳ Provider 30-minute response timer started. Will automatically expire if unanswered.
+                </Text>
+              )}
 
-      {/* 1. SELECT PROVIDER */}
-      <Text style={styles.sectionTitle}>1. Select Service Provider</Text>
-      <View style={styles.providerRow}>
-        {providers.map((p) => {
-          const isSelected = selectedProvider?.id === p.id;
-          const isAuto = p.providerProfile?.bookingPreference === "AUTO_CONFIRM";
+              <HzButton
+                label="Track In My Orders Tab"
+                onPress={() => setActiveTab("my_bookings")}
+                style={{ marginTop: 12 }}
+              />
+            </HzCard>
+          )}
+
+          {/* ERROR MESSAGE */}
+          {errorMsg && (
+            <View style={styles.errorBox}>
+              <AlertCircle size={18} color="#DC2626" />
+              <Text style={styles.errorText}>{errorMsg}</Text>
+            </View>
+          )}
+
+          {/* 1. SELECT PROVIDER */}
+          <Text style={styles.sectionTitle}>1. Select Service Provider</Text>
+          <View style={styles.providerRow}>
+            {providers.map((p) => {
+              const isSelected = selectedProvider?.id === p.id;
+              const isAuto = p.providerProfile?.bookingPreference === "AUTO_CONFIRM";
 
           return (
             <TouchableOpacity
@@ -303,6 +445,8 @@ export const HzBookingScheduleScreen: React.FC<{ onNavigate: (s: string) => void
           onPress={handleCreateBooking}
         />
       </View>
+      </>
+      )}
 
       <View style={{ height: 40 }} />
     </ScrollView>
@@ -321,6 +465,33 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 12,
     marginBottom: 16,
+  },
+  tabGroup: {
+    flexDirection: "row",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 14,
+    padding: 4,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "#E8E3DB",
+    gap: 6,
+  },
+  tabBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: "center",
+    borderRadius: 10,
+  },
+  tabBtnActive: {
+    backgroundColor: "#161533",
+  },
+  tabBtnText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#161533",
+  },
+  tabBtnTextActive: {
+    color: "#FFFFFF",
   },
   title: {
     fontSize: 18,
