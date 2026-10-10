@@ -2,7 +2,7 @@
 import { Platform } from "react-native";
 
 // Automatically uses LAN IP for physical phones on Expo Go and localhost for Web
-export const API_HOST_IP = "192.168.1.7";
+export const API_HOST_IP = "192.168.18.87";
 export const API_BASE_URL =
   Platform.OS === "web"
     ? "http://localhost:4000"
