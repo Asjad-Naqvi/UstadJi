@@ -218,6 +218,7 @@ export default function App() {
       case "job-status":
         return (
           <HzJobStatusScreen
+            booking={currentBooking}
             onBack={() => setCurrentScreen("main")}
             onReschedule={() => setCurrentScreen("date-time-picker")}
             onViewInvoice={() => setCurrentScreen("invoice-view")}
@@ -228,6 +229,7 @@ export default function App() {
       case "invoice-view":
         return (
           <HzCustomerInvoiceViewScreen
+            booking={currentBooking}
             onBack={() => setCurrentScreen("job-status")}
             onDone={() => setCurrentScreen("main")}
           />

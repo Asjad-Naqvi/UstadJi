@@ -5,6 +5,7 @@ import {
   ScrollView,
   TouchableOpacity,
   StyleSheet,
+  Alert,
 } from "react-native";
 import { ArrowLeft, Clock, MapPin, ShieldCheck, CheckCircle, AlertCircle } from "lucide-react-native";
 import { COLORS } from "../theme/theme";
@@ -56,19 +57,8 @@ export const HzBookingConfirmationScreen: React.FC<HzBookingConfirmationScreenPr
 
       onConfirm(res);
     } catch (e) {
-      console.warn("Could not create booking via API, creating simulated booking:", e);
-      onConfirm({
-        id: "sim-" + Date.now(),
-        bookingCode: "BK-" + Math.floor(1000 + Math.random() * 9000),
-        status: selectedProvider?.preference === "AUTO_CONFIRM" ? "SCHEDULED" : "PENDING_ACCEPTANCE",
-        serviceCategory: "Plumbing",
-        appointmentDate: selectedDate,
-        startTime: "10:00",
-        endTime: "11:00",
-        estimatedPrice: hourlyRate,
-        customer: currentUser || { fullName: "Zain Khan" },
-        provider: { fullName: providerName },
-      });
+      console.error("Booking Creation Failed:", e);
+      Alert.alert("Booking Request Failed", (e as Error).message || "Could not connect to backend server");
     } finally {
       setLoading(false);
     }
