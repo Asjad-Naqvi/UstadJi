@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import {
-  SafeAreaView,
   StatusBar,
   StyleSheet,
   View,
@@ -8,6 +7,7 @@ import {
   TouchableOpacity,
   ScrollView,
 } from "react-native";
+import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
 import { StatusBar as ExpoStatusBar } from "expo-status-bar";
 import { COLORS } from "./src/theme/theme";
 import { HzBottomNav } from "./src/components/HzBottomNav";
@@ -368,10 +368,12 @@ export default function App() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <ExpoStatusBar style="dark" />
-      {renderScreen()}
-    </SafeAreaView>
+    <SafeAreaProvider>
+      <SafeAreaView style={styles.safeArea}>
+        <ExpoStatusBar style="dark" />
+        {renderScreen()}
+      </SafeAreaView>
+    </SafeAreaProvider>
   );
 }
 
