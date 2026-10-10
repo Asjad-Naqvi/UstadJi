@@ -11,11 +11,14 @@ import { ArrowLeft, Clock, Phone, MapPin, CheckCircle2, RotateCcw, XCircle, File
 import { COLORS } from "../theme/theme";
 import { HzButton, HzCard } from "../components/HzPrimitives";
 
+import { api } from "../services/api";
+
 interface HzJobStatusScreenProps {
   onBack: () => void;
   onReschedule: () => void;
   onViewInvoice: () => void;
   onCancel: () => void;
+  booking?: any;
 }
 
 export const HzJobStatusScreen: React.FC<HzJobStatusScreenProps> = ({
@@ -23,8 +26,58 @@ export const HzJobStatusScreen: React.FC<HzJobStatusScreenProps> = ({
   onReschedule,
   onViewInvoice,
   onCancel,
+  booking,
 }) => {
-  const [jobPhase, setJobPhase] = useState<"SCHEDULED" | "IN_PROGRESS" | "COMPLETED">("SCHEDULED");
+  const [jobPhase, setJobPhase] = useState<"SCHEDULED" | "IN_PROGRESS" | "COMPLETED">(
+    booking?.status === "COMPLETED"
+      ? "COMPLETED"
+      : booking?.status === "IN_PROGRESS"
+      ? "IN_PROGRESS"
+      : "SCHEDULED"
+  );
+  const [currentBookingData, setCurrentBookingData] = useState<any>(booking);
+  const [loading, setLoading] = useState(false);
+
+  React.useEffect(() => {
+    if (booking?.id) {
+      loadBooking();
+    }
+  }, [booking?.id]);
+
+  const loadBooking = async () => {
+    try {
+      const data = await api.getBooking(booking.id);
+      setCurrentBookingData(data);
+      if (data.status === "COMPLETED" || data.status === "IN_PROGRESS" || data.status === "SCHEDULED") {
+        setJobPhase(data.status);
+      }
+    } catch (e) {
+      console.warn("Could not refresh booking:", e);
+    }
+  };
+
+  const handleSetStatus = async (status: "IN_PROGRESS" | "COMPLETED") => {
+    if (!booking?.id) return;
+    try {
+      setLoading(true);
+      await api.updateBookingStatus(booking.id, status);
+      setJobPhase(status);
+      Alert.alert("Status Updated ✓", `Booking status updated to ${status}.`);
+    } catch (e) {
+      Alert.alert("Error Updating Status", (e as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const bookingCode = currentBookingData?.bookingCode || booking?.bookingCode || "Booking";
+  const serviceCategory = currentBookingData?.serviceCategory || booking?.serviceCategory || "Service";
+  const issueDescription = currentBookingData?.issueDescription || booking?.issueDescription || "Service Request";
+  const providerName = currentBookingData?.provider?.fullName || booking?.provider?.fullName || "Assigned Technician";
+  const providerPhone = currentBookingData?.provider?.phone || booking?.provider?.phone || "+92 300 0000000";
+  const appointmentDate = currentBookingData?.appointmentDate ? String(currentBookingData.appointmentDate).slice(0, 10) : "Tomorrow";
+  const startTime = currentBookingData?.startTime || "10:00";
+  const endTime = currentBookingData?.endTime || "11:00";
 
   return (
     <View style={styles.container}>
@@ -40,7 +93,7 @@ export const HzJobStatusScreen: React.FC<HzJobStatusScreenProps> = ({
         {/* Status Card */}
         <HzCard style={styles.card}>
           <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-            <Text style={styles.codeText}>BK-1001 • Master Plumbing</Text>
+            <Text style={styles.codeText}>{bookingCode} • {serviceCategory}</Text>
             <View
               style={[
                 styles.statusBadge,
@@ -53,8 +106,8 @@ export const HzJobStatusScreen: React.FC<HzJobStatusScreenProps> = ({
             </View>
           </View>
 
-          <Text style={styles.jobHeading}>Main water pipe valve leaking in kitchen</Text>
-          <Text style={styles.timeInfo}>📅 Tomorrow at 10:00 AM - 11:00 AM</Text>
+          <Text style={styles.jobHeading}>{issueDescription}</Text>
+          <Text style={styles.timeInfo}>📅 {appointmentDate} at {startTime} - {endTime}</Text>
 
           {/* Lifecycle Bar */}
           <View style={styles.phaseRow}>
@@ -80,12 +133,12 @@ export const HzJobStatusScreen: React.FC<HzJobStatusScreenProps> = ({
           <Text style={styles.cardSectionLabel}>Assigned Technician</Text>
           <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 6 }}>
             <View>
-              <Text style={styles.pName}>Ustad Tariq Mehmood</Text>
-              <Text style={styles.pTrade}>Master Plumber • 4.9 ★ (128 reviews)</Text>
+              <Text style={styles.pName}>{providerName}</Text>
+              <Text style={styles.pTrade}>{serviceCategory} Specialist</Text>
             </View>
             <TouchableOpacity
               style={styles.callBtn}
-              onPress={() => Alert.alert("Calling Ustad", "Dialing +92 333 1112233...")}
+              onPress={() => Alert.alert("Calling Ustad", `Dialing ${providerPhone}...`)}
             >
               <Phone size={18} color="#FFFFFF" />
             </TouchableOpacity>
@@ -94,17 +147,23 @@ export const HzJobStatusScreen: React.FC<HzJobStatusScreenProps> = ({
 
         {/* Actions Stack */}
         <View style={{ gap: 10, marginTop: 10 }}>
-          <HzButton
-            label="Simulate Provider Arrived (IN PROGRESS)"
-            variant="secondary"
-            onPress={() => setJobPhase("IN_PROGRESS")}
-          />
+          {jobPhase !== "COMPLETED" && (
+            <>
+              <HzButton
+                label={loading ? "Updating..." : "Mark Provider Arrived (IN PROGRESS)"}
+                variant="secondary"
+                disabled={loading}
+                onPress={() => handleSetStatus("IN_PROGRESS")}
+              />
 
-          <HzButton
-            label="Simulate Work Finished (COMPLETED)"
-            style={{ backgroundColor: COLORS.green }}
-            onPress={() => setJobPhase("COMPLETED")}
-          />
+              <HzButton
+                label={loading ? "Updating..." : "Mark Work Finished (COMPLETED)"}
+                style={{ backgroundColor: COLORS.green }}
+                disabled={loading}
+                onPress={() => handleSetStatus("COMPLETED")}
+              />
+            </>
+          )}
 
           <HzButton
             label="View Itemized Invoice (M8)"

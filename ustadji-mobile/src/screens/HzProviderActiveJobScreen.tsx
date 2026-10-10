@@ -33,45 +33,62 @@ export const HzProviderActiveJobScreen: React.FC<HzProviderActiveJobScreenProps>
   const [invoiceGenerated, setInvoiceGenerated] = useState(booking?.status === "COMPLETED");
   const [loading, setLoading] = useState(false);
 
-  const bookingCode = booking?.bookingCode || "BK-1001";
-  const serviceCat = booking?.serviceCategory || "Master Plumbing";
-  const issueDesc = booking?.issueDescription || "Main water pipe valve leaking in kitchen";
-  const customerName = booking?.customer?.fullName || "Zain Khan";
-  const customerPhone = booking?.customer?.phone || "+92 300 5551234";
+  const bookingCode = booking?.bookingCode;
+  const serviceCat = booking?.serviceCategory;
+  const issueDesc = booking?.issueDescription;
+  const customerName = booking?.customer?.fullName;
+  const customerPhone = booking?.customer?.phone;
+  const hourlyRate = booking?.estimatedPrice || 800;
 
   const handleStartWork = async () => {
+    if (!booking?.id) return;
     try {
       setLoading(true);
-      if (booking?.id && !booking.id.startsWith("sim-")) {
-        await api.updateBookingStatus(booking.id, "IN_PROGRESS");
-      }
+      await api.updateBookingStatus(booking.id, "IN_PROGRESS");
       setJobState("IN_PROGRESS");
       Alert.alert("Status Updated ✓", "Job marked as IN PROGRESS. Customer has been notified.");
     } catch (e) {
-      Alert.alert("Notice", (e as Error).message);
-      setJobState("IN_PROGRESS");
+      Alert.alert("Error Updating Status", (e as Error).message);
     } finally {
       setLoading(false);
     }
   };
 
   const handleCompleteWork = async () => {
+    if (!booking?.id) return;
     try {
       setLoading(true);
-      if (booking?.id && !booking.id.startsWith("sim-")) {
-        await api.updateBookingStatus(booking.id, "COMPLETED");
-      }
+      await api.updateBookingStatus(booking.id, "COMPLETED");
       setJobState("COMPLETED");
       setInvoiceGenerated(true);
       Alert.alert("Job Finished! 🎉", "Voice-to-Invoice generated. Receipt sent to customer.");
     } catch (e) {
-      Alert.alert("Notice", (e as Error).message);
-      setJobState("COMPLETED");
-      setInvoiceGenerated(true);
+      Alert.alert("Error Completing Job", (e as Error).message);
     } finally {
       setLoading(false);
     }
   };
+
+  if (!booking) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={onBack} style={{ padding: 4 }}>
+            <ArrowLeft size={22} color={COLORS.navy} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Active Job Management</Text>
+        </View>
+        <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 24, gap: 12 }}>
+          <Clock size={48} color="#9B9B9B" />
+          <Text style={{ fontSize: 16, fontWeight: "700", color: "#161533" }}>No Active Job Selected</Text>
+          <Text style={{ fontSize: 12, color: "#9B9B9B", textAlign: "center" }}>
+            Select an accepted job from your Inbox tab to manage its lifecycle status.
+          </Text>
+          <HzButton label="Return to Dashboard" onPress={onBack} style={{ marginTop: 12 }} />
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>

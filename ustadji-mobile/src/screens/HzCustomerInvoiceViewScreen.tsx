@@ -14,18 +14,25 @@ import { HzButton, HzCard } from "../components/HzPrimitives";
 interface HzCustomerInvoiceViewScreenProps {
   onBack: () => void;
   onDone: () => void;
+  booking?: any;
 }
 
 export const HzCustomerInvoiceViewScreen: React.FC<HzCustomerInvoiceViewScreenProps> = ({
   onBack,
   onDone,
+  booking,
 }) => {
   const [rating, setRating] = useState(5);
   const [rated, setRated] = useState(false);
 
+  const providerName = booking?.provider?.fullName || "Assigned Provider";
+  const serviceCategory = booking?.serviceCategory || "Service";
+  const bookingCode = booking?.bookingCode ? `INV-${booking.bookingCode}` : "INV-1001";
+  const laborPrice = booking?.estimatedPrice || 800;
+
   const handleSubmitRating = () => {
     setRated(true);
-    Alert.alert("Shukriya! ⭐", "Your 5-star review has been recorded for Ustad Tariq.");
+    Alert.alert("Shukriya! ⭐", `Your ${rating}-star review has been recorded for ${providerName}.`);
   };
 
   return (
@@ -43,8 +50,8 @@ export const HzCustomerInvoiceViewScreen: React.FC<HzCustomerInvoiceViewScreenPr
         <HzCard style={styles.card}>
           <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
             <View>
-              <Text style={styles.invCode}>Invoice #INV-1001</Text>
-              <Text style={styles.invDate}>Completed Today • 11:30 AM</Text>
+              <Text style={styles.invCode}>Invoice #{bookingCode}</Text>
+              <Text style={styles.invDate}>Completed • Official Receipt</Text>
             </View>
             <View style={styles.paidBadge}>
               <CheckCircle2 size={14} color={COLORS.green} />
@@ -53,35 +60,30 @@ export const HzCustomerInvoiceViewScreen: React.FC<HzCustomerInvoiceViewScreenPr
           </View>
 
           <View style={styles.providerRow}>
-            <Text style={styles.pName}>Ustad Tariq Mehmood</Text>
-            <Text style={styles.pTrade}>Master Plumber</Text>
+            <Text style={styles.pName}>{providerName}</Text>
+            <Text style={styles.pTrade}>{serviceCategory} Specialist</Text>
           </View>
 
           <View style={styles.divider} />
 
           {/* Line items */}
-          <Text style={styles.breakdownHeading}>Itemized Breakdown (M8 Engine)</Text>
+          <Text style={styles.breakdownHeading}>Itemized Breakdown</Text>
 
           <View style={styles.lineItem}>
-            <Text style={styles.itemTitle}>Diagnostic & Labor (1 hr)</Text>
-            <Text style={styles.itemPrice}>PKR 800</Text>
+            <Text style={styles.itemTitle}>Diagnostic & Base Labor Fee</Text>
+            <Text style={styles.itemPrice}>PKR {laborPrice}</Text>
           </View>
 
           <View style={styles.lineItem}>
-            <Text style={styles.itemTitle}>High-Pressure Water Valve (1/2")</Text>
-            <Text style={styles.itemPrice}>PKR 450</Text>
-          </View>
-
-          <View style={styles.lineItem}>
-            <Text style={styles.itemTitle}>Teflon Sealant & Thread Tape</Text>
-            <Text style={styles.itemPrice}>PKR 120</Text>
+            <Text style={styles.itemTitle}>Platform Service & Verification Fee</Text>
+            <Text style={styles.itemPrice}>PKR 0 (Free)</Text>
           </View>
 
           <View style={styles.divider} />
 
           <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>Total Amount</Text>
-            <Text style={styles.totalAmount}>PKR 1,370</Text>
+            <Text style={styles.totalLabel}>Total Amount Paid</Text>
+            <Text style={styles.totalAmount}>PKR {laborPrice}</Text>
           </View>
         </HzCard>
 

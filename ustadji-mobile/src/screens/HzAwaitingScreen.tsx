@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, Alert } from "react-native";
 import { Clock, CheckCircle2, X } from "lucide-react-native";
 import { COLORS } from "../theme/theme";
 import { HzButton } from "../components/HzPrimitives";
@@ -19,9 +19,9 @@ export const HzAwaitingScreen: React.FC<HzAwaitingScreenProps> = ({
   const [secondsLeft, setSecondsLeft] = useState(1795); // ~29:55
   const [loading, setLoading] = useState(false);
 
-  const bookingCode = booking?.bookingCode || "BK-1001";
-  const providerName = booking?.provider?.fullName || "Ustad Tariq Mehmood";
-  const providerId = booking?.providerId || "18cc5f37-d760-4bdc-a2fe-f6d49c61d54b";
+  const bookingCode = booking?.bookingCode || "";
+  const providerName = booking?.provider?.fullName || "Service Provider";
+  const providerId = booking?.providerId;
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -31,15 +31,13 @@ export const HzAwaitingScreen: React.FC<HzAwaitingScreenProps> = ({
   }, []);
 
   const handleSimulateAcceptance = async () => {
+    if (!booking?.id || !providerId) return;
     try {
       setLoading(true);
-      if (booking?.id && !booking.id.startsWith("sim-")) {
-        await api.acceptBooking(booking.id, providerId);
-      }
+      await api.acceptBooking(booking.id, providerId);
       onAccepted();
     } catch (e) {
-      console.warn("Accept API notice:", e);
-      onAccepted();
+      Alert.alert("Acceptance Failed", (e as Error).message);
     } finally {
       setLoading(false);
     }
