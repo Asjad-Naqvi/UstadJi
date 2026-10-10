@@ -19,30 +19,70 @@ interface HzLoginScreenProps {
   onRoleSelect: () => void;
 }
 
+const CONSUMER_PROFILES = [
+  { name: "Zain Khan", phone: "+92 300 5551234", email: "zain@ustadji.pk", sector: "F-7/2" },
+  { name: "Ayesha Malik", phone: "+92 300 5555678", email: "ayesha@ustadji.pk", sector: "G-11/1" },
+  { name: "Hamza Abbasi", phone: "+92 300 5559900", email: "hamza@ustadji.pk", sector: "E-11/3" },
+  { name: "Fatima Zahra", phone: "+92 300 5557788", email: "fatima@ustadji.pk", sector: "F-10/2" },
+];
+
+const PROVIDER_PROFILES = [
+  { name: "Ustad Tariq Mehmood", trade: "Plumber (Manual 30m)", phone: "+92 333 1112233", email: "tariq@ustadji.pk" },
+  { name: "Ustad Rashid Ali", trade: "HVAC (Auto-Confirm)", phone: "+92 333 4445566", email: "rashid@ustadji.pk" },
+  { name: "Ustad Bilal Ahmad", trade: "Electrician (Manual 30m)", phone: "+92 333 7778899", email: "bilal@ustadji.pk" },
+  { name: "Ustad Muhammad Aslam", trade: "Carpenter (Manual 30m)", phone: "+92 333 2221100", email: "aslam@ustadji.pk" },
+  { name: "Ustad Noman Qureshi", trade: "Painter (Auto-Confirm)", phone: "+92 333 8884422", email: "noman@ustadji.pk" },
+];
+
 export const HzLoginScreen: React.FC<HzLoginScreenProps> = ({
   onLoginSuccess,
   onRegister,
   onRoleSelect,
 }) => {
   const [selectedRole, setSelectedRole] = useState<"consumer" | "provider" | "admin">("consumer");
-  const [phone, setPhone] = useState("+92 300 5551234");
+  const [selectedConsumerIndex, setSelectedConsumerIndex] = useState(0);
+  const [selectedProviderIndex, setSelectedProviderIndex] = useState(0);
+  const [phone, setPhone] = useState(CONSUMER_PROFILES[0].phone);
   const [password, setPassword] = useState("password123");
+  const [currentEmail, setCurrentEmail] = useState(CONSUMER_PROFILES[0].email);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const handleRoleChange = (role: "consumer" | "provider" | "admin") => {
     setSelectedRole(role);
+    setErrorMsg(null);
     if (role === "consumer") {
-      setPhone("+92 300 5551234");
+      const p = CONSUMER_PROFILES[selectedConsumerIndex];
+      setPhone(p.phone);
+      setCurrentEmail(p.email);
       setPassword("password123");
     } else if (role === "provider") {
-      setPhone("+92 333 1112233");
+      const p = PROVIDER_PROFILES[selectedProviderIndex];
+      setPhone(p.phone);
+      setCurrentEmail(p.email);
       setPassword("password123");
     } else {
       setPhone("admin@ustadji.pk");
+      setCurrentEmail("admin@ustadji.pk");
       setPassword("adminpassword");
     }
+  };
+
+  const handleSelectConsumer = (index: number) => {
+    setSelectedConsumerIndex(index);
+    const p = CONSUMER_PROFILES[index];
+    setPhone(p.phone);
+    setCurrentEmail(p.email);
+    setPassword("password123");
+  };
+
+  const handleSelectProvider = (index: number) => {
+    setSelectedProviderIndex(index);
+    const p = PROVIDER_PROFILES[index];
+    setPhone(p.phone);
+    setCurrentEmail(p.email);
+    setPassword("password123");
   };
 
   const handleLogin = async () => {
@@ -50,19 +90,28 @@ export const HzLoginScreen: React.FC<HzLoginScreenProps> = ({
       setLoading(true);
       setErrorMsg(null);
 
-      // Email mapping for demo users
-      const email =
-        selectedRole === "consumer"
-          ? "zain@ustadji.pk"
-          : selectedRole === "provider"
-          ? "tariq@ustadji.pk"
-          : "admin@ustadji.pk";
+      // Determine email to use
+      let email = currentEmail;
+      if (phone.includes("@")) {
+        email = phone.trim();
+      } else {
+        // Find matching demo phone
+        const cMatch = CONSUMER_PROFILES.find((c) => c.phone.replace(/\s+/g, "") === phone.replace(/\s+/g, ""));
+        const pMatch = PROVIDER_PROFILES.find((p) => p.phone.replace(/\s+/g, "") === phone.replace(/\s+/g, ""));
+        if (cMatch) email = cMatch.email;
+        else if (pMatch) email = pMatch.email;
+      }
 
       const res = await api.login(email, password);
       onLoginSuccess(selectedRole, res.user);
     } catch (err) {
-      // Fallback to local offline login if network error
-      onLoginSuccess(selectedRole, { fullName: selectedRole === "consumer" ? "Zain Khan" : "Ustad Tariq Mehmood" });
+      console.warn("API Login failed, falling back to simulated session:", err);
+      // Fallback to local profile if offline
+      const fallbackUser =
+        selectedRole === "consumer"
+          ? { id: "1aaf561c-c519-49a1-8762-8a8fb540aa4b", fullName: CONSUMER_PROFILES[selectedConsumerIndex].name, email: currentEmail, phone }
+          : { id: "18cc5f37-d760-4bdc-a2fe-f6d49c61d54b", fullName: PROVIDER_PROFILES[selectedProviderIndex].name, email: currentEmail, phone };
+      onLoginSuccess(selectedRole, fallbackUser);
     } finally {
       setLoading(false);
     }
@@ -80,7 +129,7 @@ export const HzLoginScreen: React.FC<HzLoginScreenProps> = ({
 
       {/* Heading */}
       <Text style={styles.heading}>Welcome Back</Text>
-      <Text style={styles.subheading}>Log in with your phone number & select your role.</Text>
+      <Text style={styles.subheading}>Log in to test live simulated booking & scheduling.</Text>
 
       {/* ROLE SELECTION TABS */}
       <View style={styles.roleGroup}>
@@ -116,6 +165,52 @@ export const HzLoginScreen: React.FC<HzLoginScreenProps> = ({
             Admin
           </Text>
         </TouchableOpacity>
+      </View>
+
+      {/* QUICK DUMMY PROFILE PICKER CHIPS */}
+      <View style={{ marginBottom: 14 }}>
+        <Text style={{ fontSize: 11, fontWeight: "700", color: "#9B9B9B", textTransform: "uppercase", marginBottom: 6 }}>
+          Quick Demo Profiles ({selectedRole === "consumer" ? "Consumers" : selectedRole === "provider" ? "Providers" : "Admin"})
+        </Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+          {selectedRole === "consumer" &&
+            CONSUMER_PROFILES.map((c, i) => (
+              <TouchableOpacity
+                key={c.email}
+                onPress={() => handleSelectConsumer(i)}
+                style={[
+                  styles.demoChip,
+                  selectedConsumerIndex === i && styles.demoChipActive,
+                ]}
+              >
+                <Text style={[styles.demoChipText, selectedConsumerIndex === i && styles.demoChipTextActive]}>
+                  {c.name} ({c.sector})
+                </Text>
+              </TouchableOpacity>
+            ))}
+
+          {selectedRole === "provider" &&
+            PROVIDER_PROFILES.map((p, i) => (
+              <TouchableOpacity
+                key={p.email}
+                onPress={() => handleSelectProvider(i)}
+                style={[
+                  styles.demoChip,
+                  selectedProviderIndex === i && styles.demoChipActive,
+                ]}
+              >
+                <Text style={[styles.demoChipText, selectedProviderIndex === i && styles.demoChipTextActive]}>
+                  {p.name.split(" ")[1]} • {p.trade.split(" ")[0]}
+                </Text>
+              </TouchableOpacity>
+            ))}
+
+          {selectedRole === "admin" && (
+            <View style={[styles.demoChip, styles.demoChipActive]}>
+              <Text style={styles.demoChipTextActive}>UstadJi Admin Portal</Text>
+            </View>
+          )}
+        </ScrollView>
       </View>
 
       {/* FIELDS CONTAINER */}
@@ -306,5 +401,25 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
     color: "#161533",
+  },
+  demoChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 14,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E8E3DB",
+  },
+  demoChipActive: {
+    backgroundColor: "#161533",
+    borderColor: "#161533",
+  },
+  demoChipText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#161533",
+  },
+  demoChipTextActive: {
+    color: "#FFFFFF",
   },
 });

@@ -57,6 +57,32 @@ const PROVIDERS = [
     avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80",
     verified: true,
   },
+  {
+    id: "aslam-carpenter-profile-id",
+    name: "Ustad Muhammad Aslam",
+    trade: "Master Carpenter & Woodwork",
+    rating: 4.8,
+    reviews: 112,
+    rate: 900,
+    sector: "I-8, Islamabad (2.1 km)",
+    experience: "15 yrs exp",
+    preference: "MANUAL_APPROVAL",
+    avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80",
+    verified: true,
+  },
+  {
+    id: "noman-painter-profile-id",
+    name: "Ustad Noman Qureshi",
+    trade: "Painter & Finishing Specialist",
+    rating: 4.7,
+    reviews: 65,
+    rate: 700,
+    sector: "F-7, Islamabad (0.9 km)",
+    experience: "8 yrs exp",
+    preference: "AUTO_CONFIRM",
+    avatar: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&auto=format&fit=crop&q=80",
+    verified: true,
+  },
 ];
 
 export const HzProviderResultsScreen: React.FC<HzProviderResultsScreenProps> = ({

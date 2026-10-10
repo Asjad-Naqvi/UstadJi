@@ -10,28 +10,67 @@ import {
 import { ArrowLeft, CheckCircle2, Clock, Phone, MapPin, Mic, FileText, Check } from "lucide-react-native";
 import { COLORS } from "../theme/theme";
 import { HzButton, HzCard } from "../components/HzPrimitives";
+import { api } from "../services/api";
 
 interface HzProviderActiveJobScreenProps {
   onBack: () => void;
   onFinishJob: () => void;
+  booking?: any;
 }
 
 export const HzProviderActiveJobScreen: React.FC<HzProviderActiveJobScreenProps> = ({
   onBack,
   onFinishJob,
+  booking,
 }) => {
-  const [jobState, setJobState] = useState<"SCHEDULED" | "IN_PROGRESS" | "COMPLETED">("IN_PROGRESS");
-  const [invoiceGenerated, setInvoiceGenerated] = useState(false);
+  const [jobState, setJobState] = useState<"SCHEDULED" | "IN_PROGRESS" | "COMPLETED">(
+    booking?.status === "COMPLETED"
+      ? "COMPLETED"
+      : booking?.status === "IN_PROGRESS"
+      ? "IN_PROGRESS"
+      : "SCHEDULED"
+  );
+  const [invoiceGenerated, setInvoiceGenerated] = useState(booking?.status === "COMPLETED");
+  const [loading, setLoading] = useState(false);
 
-  const handleStartWork = () => {
-    setJobState("IN_PROGRESS");
-    Alert.alert("Status Updated", "Job marked as IN PROGRESS. Customer has been notified.");
+  const bookingCode = booking?.bookingCode || "BK-1001";
+  const serviceCat = booking?.serviceCategory || "Master Plumbing";
+  const issueDesc = booking?.issueDescription || "Main water pipe valve leaking in kitchen";
+  const customerName = booking?.customer?.fullName || "Zain Khan";
+  const customerPhone = booking?.customer?.phone || "+92 300 5551234";
+
+  const handleStartWork = async () => {
+    try {
+      setLoading(true);
+      if (booking?.id && !booking.id.startsWith("sim-")) {
+        await api.updateBookingStatus(booking.id, "IN_PROGRESS");
+      }
+      setJobState("IN_PROGRESS");
+      Alert.alert("Status Updated ✓", "Job marked as IN PROGRESS. Customer has been notified.");
+    } catch (e) {
+      Alert.alert("Notice", (e as Error).message);
+      setJobState("IN_PROGRESS");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleCompleteWork = () => {
-    setJobState("COMPLETED");
-    setInvoiceGenerated(true);
-    Alert.alert("Job Finished! 🎉", "Voice-to-Invoice extracted. Invoice ready for customer review.");
+  const handleCompleteWork = async () => {
+    try {
+      setLoading(true);
+      if (booking?.id && !booking.id.startsWith("sim-")) {
+        await api.updateBookingStatus(booking.id, "COMPLETED");
+      }
+      setJobState("COMPLETED");
+      setInvoiceGenerated(true);
+      Alert.alert("Job Finished! 🎉", "Voice-to-Invoice generated. Receipt sent to customer.");
+    } catch (e) {
+      Alert.alert("Notice", (e as Error).message);
+      setJobState("COMPLETED");
+      setInvoiceGenerated(true);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -48,7 +87,7 @@ export const HzProviderActiveJobScreen: React.FC<HzProviderActiveJobScreenProps>
         {/* Status Tracker Card */}
         <HzCard style={styles.card}>
           <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-            <Text style={styles.code}>BK-1001 • Master Plumbing</Text>
+            <Text style={styles.code}>{bookingCode} • {serviceCat}</Text>
             <View
               style={[
                 styles.badge,
@@ -61,8 +100,8 @@ export const HzProviderActiveJobScreen: React.FC<HzProviderActiveJobScreenProps>
             </View>
           </View>
 
-          <Text style={styles.jobTitle}>Main water pipe valve leaking in kitchen</Text>
-          <Text style={styles.customerText}>Customer: Zain Khan • +92 300 5551234</Text>
+          <Text style={styles.jobTitle}>{issueDesc}</Text>
+          <Text style={styles.customerText}>Customer: {customerName} • {customerPhone}</Text>
           <Text style={styles.addressText}>📍 House 24, Street 12, Sector F-7/2, Islamabad</Text>
 
           {/* Stepper */}

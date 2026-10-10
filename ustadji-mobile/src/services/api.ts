@@ -1,6 +1,14 @@
 // API client for UstadJi Mobile App connecting to NestJS Backend
+import { Platform } from "react-native";
 
-const API_BASE_URL = "http://localhost:4000";
+// Automatically uses LAN IP for physical phones on Expo Go and localhost for Web
+export const API_HOST_IP = "192.168.1.7";
+export const API_BASE_URL =
+  Platform.OS === "web"
+    ? "http://localhost:4000"
+    : `http://${API_HOST_IP}:4000`;
+
+console.log(`🌐 [UstadJi API] Connecting to backend at: ${API_BASE_URL}`);
 
 export const api = {
   // Auth
@@ -98,6 +106,12 @@ export const api = {
 
     const res = await fetch(url);
     if (!res.ok) throw new Error("Failed to fetch bookings");
+    return res.json();
+  },
+
+  async getBooking(id: string) {
+    const res = await fetch(`${API_BASE_URL}/bookings/${id}`);
+    if (!res.ok) throw new Error("Failed to fetch booking details");
     return res.json();
   },
 
