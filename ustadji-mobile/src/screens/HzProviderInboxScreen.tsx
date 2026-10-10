@@ -31,7 +31,11 @@ export const HzProviderInboxScreen: React.FC<HzProviderInboxScreenProps> = ({
 
   useEffect(() => {
     fetchData();
-  }, [activeTab]);
+    const interval = setInterval(() => {
+      fetchDataSilently();
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [activeTab, providerId]);
 
   const fetchData = async () => {
     try {
@@ -48,6 +52,21 @@ export const HzProviderInboxScreen: React.FC<HzProviderInboxScreenProps> = ({
       console.warn("Could not fetch provider bookings:", e);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchDataSilently = async () => {
+    try {
+      if (activeTab === "requests") {
+        const data = await api.getBookings(undefined, providerId, "PENDING_ACCEPTANCE");
+        setPendingRequests(data);
+      } else {
+        const scheduled = await api.getBookings(undefined, providerId, "SCHEDULED");
+        const inProgress = await api.getBookings(undefined, providerId, "IN_PROGRESS");
+        setActiveBookings([...inProgress, ...scheduled]);
+      }
+    } catch (e) {
+      // silent
     }
   };
 

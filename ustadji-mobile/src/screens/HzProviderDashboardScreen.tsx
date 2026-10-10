@@ -36,6 +36,10 @@ export const HzProviderDashboardScreen: React.FC<HzProviderDashboardScreenProps>
 
   React.useEffect(() => {
     fetchDashboardData();
+    const interval = setInterval(() => {
+      fetchDashboardDataSilently();
+    }, 4000);
+    return () => clearInterval(interval);
   }, [providerId]);
 
   const fetchDashboardData = async () => {
@@ -57,6 +61,25 @@ export const HzProviderDashboardScreen: React.FC<HzProviderDashboardScreenProps>
       console.warn("Could not load provider dashboard data:", e);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchDashboardDataSilently = async () => {
+    try {
+      const pending = await api.getBookings(undefined, providerId, "PENDING_ACCEPTANCE");
+      setPendingRequests(pending);
+
+      const inProgress = await api.getBookings(undefined, providerId, "IN_PROGRESS");
+      const scheduled = await api.getBookings(undefined, providerId, "SCHEDULED");
+      if (inProgress.length > 0) {
+        setActiveJob(inProgress[0]);
+      } else if (scheduled.length > 0) {
+        setActiveJob(scheduled[0]);
+      } else {
+        setActiveJob(null);
+      }
+    } catch (e) {
+      // silent
     }
   };
 

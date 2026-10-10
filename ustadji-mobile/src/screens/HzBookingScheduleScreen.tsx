@@ -52,13 +52,21 @@ export const HzBookingScheduleScreen: React.FC<{
 
   const customerId = currentUser?.id || "4d7638cf-0963-44c6-8937-1933101b9969";
 
-  // Load customer bookings or providers
+  // Load customer bookings or providers with real-time polling
   useEffect(() => {
+    let interval: any;
     if (activeTab === "my_bookings") {
       loadMyBookings();
+      interval = setInterval(() => {
+        loadMyBookingsSilently();
+      }, 4000);
     } else {
       loadProviders();
     }
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
   }, [activeTab, customerId]);
 
   // Load slots when provider or date changes
@@ -81,12 +89,21 @@ export const HzBookingScheduleScreen: React.FC<{
     }
   };
 
+  const loadMyBookingsSilently = async () => {
+    try {
+      const data = await api.getBookings(customerId);
+      setMyBookings(data);
+    } catch (err) {
+      // silent refresh
+    }
+  };
+
   const loadProviders = async () => {
     try {
       setLoading(true);
       const data = await api.getProviders();
       setProviders(data);
-      if (data.length > 0) {
+      if (data.length > 0 && !selectedProvider) {
         setSelectedProvider(data[0]); // default to Ustad Tariq
       }
     } catch (err) {
@@ -130,6 +147,13 @@ export const HzBookingScheduleScreen: React.FC<{
 
       setBookingSuccess(res);
       loadSlots(selectedProvider.id, selectedDate);
+
+      // Automatically navigate user based on initial booking status
+      if (res.status === "PENDING_ACCEPTANCE" && onSelectBooking) {
+        onSelectBooking(res, "awaiting");
+      } else if (res.status === "SCHEDULED" && onSelectBooking) {
+        onSelectBooking(res, "job-status");
+      }
     } catch (err) {
       setErrorMsg((err as Error).message);
     } finally {
@@ -142,6 +166,10 @@ export const HzBookingScheduleScreen: React.FC<{
     { label: "In 2 Days", val: new Date(Date.now() + 172800000).toISOString().split("T")[0] },
     { label: "In 3 Days", val: new Date(Date.now() + 259200000).toISOString().split("T")[0] },
   ];
+
+  const pendingBookings = myBookings.filter((b) => b.status === "PENDING_ACCEPTANCE");
+  const activeBookings = myBookings.filter((b) => b.status === "SCHEDULED" || b.status === "IN_PROGRESS");
+  const pastBookings = myBookings.filter((b) => b.status === "COMPLETED" || b.status === "DISPUTED" || b.status === "CANCELLED" || b.status === "REJECTED");
 
   return (
     <ScrollView style={styles.container}>
@@ -179,8 +207,10 @@ export const HzBookingScheduleScreen: React.FC<{
 
       {/* MY BOOKINGS LIST VIEW */}
       {activeTab === "my_bookings" ? (
-        <View style={{ gap: 12, marginBottom: 30 }}>
-          {loading && <ActivityIndicator size="small" color={COLORS.navy} style={{ marginVertical: 20 }} />}
+        <View style={{ gap: 14, marginBottom: 30 }}>
+          {loading && myBookings.length === 0 && (
+            <ActivityIndicator size="small" color={COLORS.navy} style={{ marginVertical: 20 }} />
+          )}
 
           {errorMsg && (
             <View style={styles.errorBox}>
@@ -197,84 +227,119 @@ export const HzBookingScheduleScreen: React.FC<{
                 You haven't placed any service reservations yet. Select an Ustad to get started!
               </Text>
               <HzButton
-                label="Browse Service Providers"
+                label="Book a Service Provider Now"
                 style={{ marginTop: 10 }}
-                onPress={() => onNavigate("explore")}
+                onPress={() => setActiveTab("book_slot")}
               />
             </HzCard>
           )}
 
-          {myBookings.map((b) => {
-            const isCompleted = b.status === "COMPLETED";
-            const isPending = b.status === "PENDING_ACCEPTANCE";
-            const isScheduled = b.status === "SCHEDULED" || b.status === "IN_PROGRESS";
-
-            return (
-              <HzCard key={b.id} style={{ padding: 16 }}>
-                <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-                  <Text style={{ fontSize: 15, fontWeight: "700", color: COLORS.navy }}>
-                    {b.bookingCode} • {b.serviceCategory}
-                  </Text>
-                  <View
-                    style={{
-                      paddingHorizontal: 8,
-                      paddingVertical: 3,
-                      borderRadius: 10,
-                      backgroundColor: isCompleted
-                        ? "rgba(16, 185, 129, 0.15)"
-                        : isPending
-                        ? "rgba(255, 107, 53, 0.15)"
-                        : "rgba(22, 21, 51, 0.12)",
-                    }}
-                  >
-                    <Text
-                      style={{
-                        fontSize: 10,
-                        fontWeight: "700",
-                        color: isCompleted ? COLORS.green : isPending ? COLORS.orange : COLORS.navy,
-                      }}
-                    >
-                      {b.status}
+          {/* 1. PENDING APPROVAL SECTION */}
+          {pendingBookings.length > 0 && (
+            <View style={{ gap: 8 }}>
+              <Text style={styles.groupHeader}>⏳ Pending Approval ({pendingBookings.length})</Text>
+              {pendingBookings.map((b) => (
+                <HzCard key={b.id} style={styles.pendingCard}>
+                  <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                    <Text style={{ fontSize: 14, fontWeight: "700", color: COLORS.navy }}>
+                      {b.bookingCode} • {b.serviceCategory}
                     </Text>
+                    <View style={styles.pendingBadge}>
+                      <Text style={styles.pendingBadgeText}>PENDING APPROVAL</Text>
+                    </View>
                   </View>
-                </View>
+                  <Text style={{ fontSize: 13, fontWeight: "600", color: "#1A1A1A", marginTop: 4 }}>
+                    {b.issueDescription}
+                  </Text>
+                  <Text style={{ fontSize: 12, color: "#555555", marginTop: 2 }}>
+                    Provider: {b.provider?.fullName || "Assigned Provider"}
+                  </Text>
+                  <Text style={{ fontSize: 12, color: COLORS.orange, fontWeight: "600", marginTop: 4 }}>
+                    📅 {String(b.appointmentDate).slice(0, 10)} at {b.startTime} - {b.endTime} • 30m Timer Active
+                  </Text>
+                  <HzButton
+                    label="View Response Countdown →"
+                    style={{ marginTop: 10, height: 38, backgroundColor: COLORS.orange }}
+                    onPress={() => onSelectBooking && onSelectBooking(b, "awaiting")}
+                  />
+                </HzCard>
+              ))}
+            </View>
+          )}
 
-                <Text style={{ fontSize: 13, fontWeight: "600", color: "#1A1A1A", marginTop: 6 }}>
-                  {b.issueDescription}
-                </Text>
-                <Text style={{ fontSize: 12, color: "#9B9B9B", marginTop: 2 }}>
-                  Technician: {b.provider?.fullName || "Assigned Provider"}
-                </Text>
-                <Text style={{ fontSize: 12, color: COLORS.navy, fontWeight: "600", marginTop: 4 }}>
-                  📅 {String(b.appointmentDate).slice(0, 10)} at {b.startTime} - {b.endTime} • PKR {b.estimatedPrice}
-                </Text>
+          {/* 2. ACTIVE / SCHEDULED JOBS SECTION */}
+          {activeBookings.length > 0 && (
+            <View style={{ gap: 8 }}>
+              <Text style={styles.groupHeader}>⚡ Active & Scheduled Jobs ({activeBookings.length})</Text>
+              {activeBookings.map((b) => (
+                <HzCard key={b.id} style={{ padding: 16 }}>
+                  <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                    <Text style={{ fontSize: 14, fontWeight: "700", color: COLORS.navy }}>
+                      {b.bookingCode} • {b.serviceCategory}
+                    </Text>
+                    <View style={styles.scheduledBadge}>
+                      <Text style={styles.scheduledBadgeText}>{b.status}</Text>
+                    </View>
+                  </View>
+                  <Text style={{ fontSize: 13, fontWeight: "600", color: "#1A1A1A", marginTop: 4 }}>
+                    {b.issueDescription}
+                  </Text>
+                  <Text style={{ fontSize: 12, color: "#555555", marginTop: 2 }}>
+                    Technician: {b.provider?.fullName || "Assigned Technician"}
+                  </Text>
+                  <Text style={{ fontSize: 12, color: COLORS.navy, fontWeight: "600", marginTop: 4 }}>
+                    📅 {String(b.appointmentDate).slice(0, 10)} at {b.startTime} - {b.endTime} • PKR {b.estimatedPrice}
+                  </Text>
+                  <HzButton
+                    label="Track Job Status & Location →"
+                    style={{ marginTop: 10, height: 38 }}
+                    onPress={() => onSelectBooking && onSelectBooking(b, "job-status")}
+                  />
+                </HzCard>
+              ))}
+            </View>
+          )}
 
-                <View style={{ marginTop: 12 }}>
-                  {isPending && (
-                    <HzButton
-                      label="View Response Countdown →"
-                      style={{ height: 40, backgroundColor: COLORS.orange }}
-                      onPress={() => onSelectBooking && onSelectBooking(b, "awaiting")}
-                    />
-                  )}
-                  {isScheduled && (
-                    <HzButton
-                      label="Track Job Status & Location →"
-                      style={{ height: 40 }}
-                      onPress={() => onSelectBooking && onSelectBooking(b, "job-status")}
-                    />
-                  )}
-                  {isCompleted && (
-                    <HzButton
-                      label="View Itemized Invoice & Rating →"
-                      style={{ height: 40, backgroundColor: COLORS.green }}
-                      onPress={() => onSelectBooking && onSelectBooking(b, "invoice-view")}
-                    />
-                  )}
-                </View>
-              </HzCard>
-            );
-          })}
+          {/* 3. COMPLETED & PAST JOBS SECTION */}
+          {pastBookings.length > 0 && (
+            <View style={{ gap: 8 }}>
+              <Text style={styles.groupHeader}>✅ Completed & Past ({pastBookings.length})</Text>
+              {pastBookings.map((b) => (
+                <HzCard key={b.id} style={{ padding: 14 }}>
+                  <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                    <Text style={{ fontSize: 14, fontWeight: "700", color: COLORS.navy }}>
+                      {b.bookingCode} • {b.serviceCategory}
+                    </Text>
+                    <View
+                      style={[
+                        styles.pastBadge,
+                        b.status === "COMPLETED" && { backgroundColor: "rgba(16, 185, 129, 0.15)" },
+                        b.status === "DISPUTED" && { backgroundColor: "rgba(255, 107, 53, 0.15)" },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.pastBadgeText,
+                          b.status === "COMPLETED" && { color: COLORS.green },
+                          b.status === "DISPUTED" && { color: COLORS.orange },
+                        ]}
+                      >
+                        {b.status}
+                      </Text>
+                    </View>
+                  </View>
+                  <Text style={{ fontSize: 12, color: "#555555", marginTop: 2 }}>
+                    Technician: {b.provider?.fullName || "Provider"} • {String(b.appointmentDate).slice(0, 10)}
+                  </Text>
+                  <HzButton
+                    label="View Itemized Invoice & Details →"
+                    style={{ marginTop: 8, height: 36, backgroundColor: b.status === "COMPLETED" ? COLORS.green : COLORS.navy }}
+                    onPress={() => onSelectBooking && onSelectBooking(b, b.status === "DISPUTED" ? "job-status" : "invoice-view")}
+                  />
+                </HzCard>
+              ))}
+            </View>
+          )}
         </View>
       ) : (
         <>
@@ -329,123 +394,123 @@ export const HzBookingScheduleScreen: React.FC<{
               const isSelected = selectedProvider?.id === p.id;
               const isAuto = p.providerProfile?.bookingPreference === "AUTO_CONFIRM";
 
-          return (
-            <TouchableOpacity
-              key={p.id}
-              style={[styles.providerCard, isSelected && styles.providerCardSelected]}
-              onPress={() => setSelectedProvider(p)}
-            >
-              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-                <Text style={[styles.pName, isSelected && { color: "#FFFFFF" }]}>{p.fullName}</Text>
-                {isAuto ? (
-                  <View style={styles.autoBadge}>
-                    <Zap size={10} color="#FFFFFF" />
-                    <Text style={styles.autoBadgeText}>Instant</Text>
+              return (
+                <TouchableOpacity
+                  key={p.id}
+                  style={[styles.providerCard, isSelected && styles.providerCardSelected]}
+                  onPress={() => setSelectedProvider(p)}
+                >
+                  <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                    <Text style={[styles.pName, isSelected && { color: "#FFFFFF" }]}>{p.fullName}</Text>
+                    {isAuto ? (
+                      <View style={styles.autoBadge}>
+                        <Zap size={10} color="#FFFFFF" />
+                        <Text style={styles.autoBadgeText}>Instant</Text>
+                      </View>
+                    ) : (
+                      <View style={styles.manualBadge}>
+                        <Clock size={10} color="#FFFFFF" />
+                        <Text style={styles.manualBadgeText}>30m Window</Text>
+                      </View>
+                    )}
                   </View>
-                ) : (
-                  <View style={styles.manualBadge}>
-                    <Clock size={10} color="#FFFFFF" />
-                    <Text style={styles.manualBadgeText}>30m Window</Text>
-                  </View>
-                )}
-              </View>
-              <Text style={[styles.pTrade, isSelected && { color: "#E5E7EB" }]}>
-                {p.providerProfile?.trade} • PKR {p.providerProfile?.hourlyRate}/hr
-              </Text>
-              <Text style={[styles.pBuffer, isSelected && { color: "#D1D5DB" }]}>
-                Required buffer gap: {p.providerProfile?.bufferMinutes || 30} mins
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
+                  <Text style={[styles.pTrade, isSelected && { color: "#E5E7EB" }]}>
+                    {p.providerProfile?.trade} • PKR {p.providerProfile?.hourlyRate}/hr
+                  </Text>
+                  <Text style={[styles.pBuffer, isSelected && { color: "#D1D5DB" }]}>
+                    Required buffer gap: {p.providerProfile?.bufferMinutes || 30} mins
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
 
-      {/* 2. SELECT DATE */}
-      <Text style={styles.sectionTitle}>2. Select Appointment Date</Text>
-      <View style={styles.dateRow}>
-        {dateOptions.map((opt) => (
-          <TouchableOpacity
-            key={opt.val}
-            style={[styles.dateChip, selectedDate === opt.val && styles.dateChipSelected]}
-            onPress={() => setSelectedDate(opt.val)}
-          >
-            <Calendar size={14} color={selectedDate === opt.val ? "#FFFFFF" : COLORS.navy} />
-            <Text style={[styles.dateText, selectedDate === opt.val && { color: "#FFFFFF" }]}>
-              {opt.label} ({opt.val.slice(5)})
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      {/* 3. TIME SLOTS (REAL-TIME AVAILABILITY & LOCKING) */}
-      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 12 }}>
-        <Text style={styles.sectionTitle}>3. Real-Time Time Slots</Text>
-        {loading && <ActivityIndicator size="small" color={COLORS.navy} />}
-      </View>
-
-      <Text style={styles.slotSubtitle}>
-        Locks slot temporarily in Redis to prevent concurrent double-booking.
-      </Text>
-
-      <View style={styles.slotsGrid}>
-        {slots.map((slot, i) => {
-          const isSelected = selectedSlot?.startTime === slot.startTime;
-
-          return (
-            <TouchableOpacity
-              key={i}
-              disabled={!slot.isAvailable}
-              style={[
-                styles.slotBtn,
-                !slot.isAvailable && styles.slotDisabled,
-                isSelected && styles.slotSelected,
-              ]}
-              onPress={() => setSelectedSlot(slot)}
-            >
-              <Clock
-                size={14}
-                color={
-                  isSelected
-                    ? "#FFFFFF"
-                    : !slot.isAvailable
-                    ? COLORS.textMuted
-                    : COLORS.navy
-                }
-              />
-              <Text
-                style={[
-                  styles.slotTime,
-                  isSelected && { color: "#FFFFFF" },
-                  !slot.isAvailable && { color: COLORS.textMuted },
-                ]}
+          {/* 2. SELECT DATE */}
+          <Text style={styles.sectionTitle}>2. Select Appointment Date</Text>
+          <View style={styles.dateRow}>
+            {dateOptions.map((opt) => (
+              <TouchableOpacity
+                key={opt.val}
+                style={[styles.dateChip, selectedDate === opt.val && styles.dateChipSelected]}
+                onPress={() => setSelectedDate(opt.val)}
               >
-                {slot.startTime} - {slot.endTime}
-              </Text>
-              {!slot.isAvailable && (
-                <Text style={styles.slotStatusLabel}>
-                  {slot.isLocked ? "🔒 Locked" : "Booked"}
+                <Calendar size={14} color={selectedDate === opt.val ? "#FFFFFF" : COLORS.navy} />
+                <Text style={[styles.dateText, selectedDate === opt.val && { color: "#FFFFFF" }]}>
+                  {opt.label} ({opt.val.slice(5)})
                 </Text>
-              )}
-            </TouchableOpacity>
-          );
-        })}
-      </View>
+              </TouchableOpacity>
+            ))}
+          </View>
 
-      {/* SUBMIT BUTTON */}
-      <View style={{ marginTop: 24 }}>
-        <HzButton
-          label={
-            loading
-              ? "Reserving Slot..."
-              : selectedSlot
-              ? `Reserve ${selectedSlot.startTime} & Confirm`
-              : "Select an Available Time Slot"
-          }
-          disabled={!selectedSlot || loading}
-          onPress={handleCreateBooking}
-        />
-      </View>
-      </>
+          {/* 3. TIME SLOTS */}
+          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 12 }}>
+            <Text style={styles.sectionTitle}>3. Real-Time Time Slots</Text>
+            {loading && <ActivityIndicator size="small" color={COLORS.navy} />}
+          </View>
+
+          <Text style={styles.slotSubtitle}>
+            Locks slot temporarily in Redis to prevent concurrent double-booking.
+          </Text>
+
+          <View style={styles.slotsGrid}>
+            {slots.map((slot, i) => {
+              const isSelected = selectedSlot?.startTime === slot.startTime;
+
+              return (
+                <TouchableOpacity
+                  key={i}
+                  disabled={!slot.isAvailable}
+                  style={[
+                    styles.slotBtn,
+                    !slot.isAvailable && styles.slotDisabled,
+                    isSelected && styles.slotSelected,
+                  ]}
+                  onPress={() => setSelectedSlot(slot)}
+                >
+                  <Clock
+                    size={14}
+                    color={
+                      isSelected
+                        ? "#FFFFFF"
+                        : !slot.isAvailable
+                        ? COLORS.textMuted
+                        : COLORS.navy
+                    }
+                  />
+                  <Text
+                    style={[
+                      styles.slotTime,
+                      isSelected && { color: "#FFFFFF" },
+                      !slot.isAvailable && { color: COLORS.textMuted },
+                    ]}
+                  >
+                    {slot.startTime} - {slot.endTime}
+                  </Text>
+                  {!slot.isAvailable && (
+                    <Text style={styles.slotStatusLabel}>
+                      {slot.isLocked ? "🔒 Locked" : "Booked"}
+                    </Text>
+                  )}
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
+          {/* SUBMIT BUTTON */}
+          <View style={{ marginTop: 24 }}>
+            <HzButton
+              label={
+                loading
+                  ? "Reserving Slot..."
+                  : selectedSlot
+                  ? `Reserve ${selectedSlot.startTime} & Confirm`
+                  : "Select an Available Time Slot"
+              }
+              disabled={!selectedSlot || loading}
+              onPress={handleCreateBooking}
+            />
+          </View>
+        </>
       )}
 
       <View style={{ height: 40 }} />
@@ -502,6 +567,51 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: COLORS.textSecondary,
     marginTop: 2,
+  },
+  groupHeader: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: COLORS.navy,
+    marginTop: 4,
+  },
+  pendingCard: {
+    padding: 16,
+    backgroundColor: "rgba(255, 107, 53, 0.04)",
+    borderWidth: 1,
+    borderColor: "rgba(255, 107, 53, 0.3)",
+  },
+  pendingBadge: {
+    backgroundColor: "rgba(255, 107, 53, 0.15)",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 10,
+  },
+  pendingBadgeText: {
+    fontSize: 10,
+    fontWeight: "700",
+    color: COLORS.orange,
+  },
+  scheduledBadge: {
+    backgroundColor: "rgba(22, 21, 51, 0.12)",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 10,
+  },
+  scheduledBadgeText: {
+    fontSize: 10,
+    fontWeight: "700",
+    color: COLORS.navy,
+  },
+  pastBadge: {
+    backgroundColor: "#F3F4F6",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 10,
+  },
+  pastBadgeText: {
+    fontSize: 10,
+    fontWeight: "700",
+    color: "#666666",
   },
   successCard: {
     backgroundColor: "rgba(76, 175, 132, 0.1)",
