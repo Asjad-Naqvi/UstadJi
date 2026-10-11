@@ -1,8 +1,19 @@
-// API client for UstadJi Mobile App connecting to NestJS Backend
-import { Platform } from "react-native";
+// Automatically uses dynamic host IP from Metro or LAN IP for physical phones on Expo Go and localhost for Web
+import { Platform, NativeModules } from "react-native";
 
-// Automatically uses LAN IP for physical phones on Expo Go and localhost for Web
-export const API_HOST_IP = "192.168.18.87";
+function getHostIp(): string {
+  if (Platform.OS === "web") return "localhost";
+  const scriptURL = NativeModules.SourceCode?.scriptURL;
+  if (scriptURL) {
+    const match = scriptURL.match(/^https?:\/\/([^:/]+)/);
+    if (match && match[1]) {
+      return match[1];
+    }
+  }
+  return "192.168.1.7";
+}
+
+export const API_HOST_IP = getHostIp();
 export const API_BASE_URL =
   Platform.OS === "web"
     ? "http://localhost:4000"
