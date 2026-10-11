@@ -22,7 +22,7 @@ interface HzProviderInboxScreenProps {
 export const HzProviderInboxScreen: React.FC<HzProviderInboxScreenProps> = ({
   onBack,
   onJobAccepted,
-  providerId = "18cc5f37-d760-4bdc-a2fe-f6d49c61d54b", // Default Ustad Tariq
+  providerId = "1e1a0343-e483-47f4-bdb3-7e120017ce84", // Default Ustad Tariq
 }) => {
   const [activeTab, setActiveTab] = useState<"requests" | "active">("requests");
   const [pendingRequests, setPendingRequests] = useState<any[]>([]);

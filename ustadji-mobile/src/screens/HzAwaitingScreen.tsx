@@ -93,17 +93,10 @@ export const HzAwaitingScreen: React.FC<HzAwaitingScreenProps> = ({
       </View>
 
       <Text style={styles.infoText}>
-        {providerName} has been notified via push notification. Your selected time slot is locked in the scheduling engine.
+        {providerName} has been notified. Your selected time slot is temporarily reserved while awaiting the Ustad's approval.
       </Text>
 
       <View style={styles.btnStack}>
-        <HzButton
-          label={loading ? "Accepting Request..." : "Accept Request (Provider Side Action) ✓"}
-          style={{ backgroundColor: COLORS.green }}
-          disabled={loading}
-          onPress={handleSimulateAcceptance}
-        />
-
         <HzButton
           label="Cancel Request"
           variant="secondary"

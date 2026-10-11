@@ -42,7 +42,7 @@ const CATEGORIES = [
 
 const FEATURED_USTADS = [
   {
-    id: "1",
+    id: "1e1a0343-e483-47f4-bdb3-7e120017ce84",
     name: "Ustad Tariq Mehmood",
     trade: "Master Plumber",
     rating: "4.9",
@@ -53,7 +53,7 @@ const FEATURED_USTADS = [
     verified: true,
   },
   {
-    id: "2",
+    id: "765abe5f-b21c-412d-beaf-c2b98ccb66fd",
     name: "Ustad Rashid Ali",
     trade: "HVAC & AC Expert",
     rating: "4.8",
