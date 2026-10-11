@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Switch,
+  Alert,
 } from "react-native";
 import { ArrowLeft, Bell, Map, ChevronRight, Clock, DollarSign, CheckCircle2, TrendingUp, AlertCircle } from "lucide-react-native";
 import { COLORS } from "../theme/theme";
@@ -85,6 +86,32 @@ export const HzProviderDashboardScreen: React.FC<HzProviderDashboardScreenProps>
     }
   };
 
+  const handleAcceptDirect = async (booking: any) => {
+    try {
+      setLoading(true);
+      await api.acceptBooking(booking.id, providerId);
+      Alert.alert("Job Accepted! 🎉", `Booking ${booking.bookingCode} accepted. Moved to Active / Scheduled Jobs.`);
+      await fetchDashboardData();
+    } catch (e) {
+      Alert.alert("Error Accepting Job", (e as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeclineDirect = async (booking: any) => {
+    try {
+      setLoading(true);
+      await api.rejectBooking(booking.id, providerId, "Provider unavailable");
+      Alert.alert("Request Declined", "Customer has been notified and slot released.");
+      await fetchDashboardData();
+    } catch (e) {
+      Alert.alert("Error Declining Job", (e as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const latestPending = pendingRequests[0];
 
   return (
@@ -146,7 +173,7 @@ export const HzProviderDashboardScreen: React.FC<HzProviderDashboardScreenProps>
 
       {/* NEW REQUEST ALERT CARD (MODULE 5) */}
       {latestPending ? (
-        <HzCard style={styles.alertCard} onPress={onViewInbox}>
+        <HzCard style={styles.alertCard}>
           <View style={styles.alertHeader}>
             <View style={styles.newBadge}>
               <Clock size={12} color="#FFFFFF" />
@@ -162,8 +189,20 @@ export const HzProviderDashboardScreen: React.FC<HzProviderDashboardScreenProps>
             Estimated PKR {latestPending.estimatedPrice} • {String(latestPending.appointmentDate).slice(0, 10)} at {latestPending.startTime}
           </Text>
 
-          <View style={styles.alertActionRow}>
-            <Text style={styles.openInboxText}>Tap to Accept / Decline in Inbox →</Text>
+          <View style={{ flexDirection: "row", gap: 10, marginTop: 12 }}>
+            <HzButton
+              label="Decline"
+              variant="secondary"
+              style={{ flex: 1, height: 40 }}
+              disabled={loading}
+              onPress={() => handleDeclineDirect(latestPending)}
+            />
+            <HzButton
+              label={loading ? "Accepting..." : "Accept Request ✓"}
+              style={{ flex: 1.4, height: 40, backgroundColor: COLORS.green }}
+              disabled={loading}
+              onPress={() => handleAcceptDirect(latestPending)}
+            />
           </View>
         </HzCard>
       ) : (
