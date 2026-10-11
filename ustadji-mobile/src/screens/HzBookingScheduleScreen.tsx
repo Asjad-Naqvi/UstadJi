@@ -169,7 +169,8 @@ export const HzBookingScheduleScreen: React.FC<{
 
   const pendingBookings = myBookings.filter((b) => b.status === "PENDING_ACCEPTANCE");
   const activeBookings = myBookings.filter((b) => b.status === "SCHEDULED" || b.status === "IN_PROGRESS");
-  const pastBookings = myBookings.filter((b) => b.status === "COMPLETED" || b.status === "DISPUTED" || b.status === "CANCELLED" || b.status === "REJECTED");
+  const rejectedBookings = myBookings.filter((b) => b.status === "REJECTED" || b.status === "EXPIRED");
+  const pastBookings = myBookings.filter((b) => b.status === "COMPLETED" || b.status === "DISPUTED" || b.status === "CANCELLED");
 
   return (
     <ScrollView style={styles.container}>
@@ -234,10 +235,10 @@ export const HzBookingScheduleScreen: React.FC<{
             </HzCard>
           )}
 
-          {/* 1. PENDING APPROVAL SECTION */}
+          {/* 1. WAITING FOR CONFIRMATION SECTION */}
           {pendingBookings.length > 0 && (
             <View style={{ gap: 8 }}>
-              <Text style={styles.groupHeader}>⏳ Pending Approval ({pendingBookings.length})</Text>
+              <Text style={styles.groupHeader}>⏳ Waiting for Confirmation ({pendingBookings.length})</Text>
               {pendingBookings.map((b) => (
                 <HzCard key={b.id} style={styles.pendingCard}>
                   <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
@@ -245,20 +246,20 @@ export const HzBookingScheduleScreen: React.FC<{
                       {b.bookingCode} • {b.serviceCategory}
                     </Text>
                     <View style={styles.pendingBadge}>
-                      <Text style={styles.pendingBadgeText}>PENDING APPROVAL</Text>
+                      <Text style={styles.pendingBadgeText}>WAITING CONFIRMATION</Text>
                     </View>
                   </View>
                   <Text style={{ fontSize: 13, fontWeight: "600", color: "#1A1A1A", marginTop: 4 }}>
                     {b.issueDescription}
                   </Text>
                   <Text style={{ fontSize: 12, color: "#555555", marginTop: 2 }}>
-                    Provider: {b.provider?.fullName || "Assigned Provider"}
+                    Requested for: {b.provider?.fullName || "Assigned Provider"}
                   </Text>
                   <Text style={{ fontSize: 12, color: COLORS.orange, fontWeight: "600", marginTop: 4 }}>
-                    📅 {String(b.appointmentDate).slice(0, 10)} at {b.startTime} - {b.endTime} • 30m Timer Active
+                    📅 {String(b.appointmentDate).slice(0, 10)} at {b.startTime} - {b.endTime} • 30m Response Timer
                   </Text>
                   <HzButton
-                    label="View Response Countdown →"
+                    label="View 30m Countdown Timer →"
                     style={{ marginTop: 10, height: 38, backgroundColor: COLORS.orange }}
                     onPress={() => onSelectBooking && onSelectBooking(b, "awaiting")}
                   />
@@ -267,18 +268,30 @@ export const HzBookingScheduleScreen: React.FC<{
             </View>
           )}
 
-          {/* 2. ACTIVE / SCHEDULED JOBS SECTION */}
+          {/* 2. ACCEPTED / ON THE WAY / ACTIVE JOBS SECTION */}
           {activeBookings.length > 0 && (
             <View style={{ gap: 8 }}>
-              <Text style={styles.groupHeader}>⚡ Active & Scheduled Jobs ({activeBookings.length})</Text>
+              <Text style={styles.groupHeader}>🚗 Accepted & On The Way ({activeBookings.length})</Text>
               {activeBookings.map((b) => (
-                <HzCard key={b.id} style={{ padding: 16 }}>
+                <HzCard key={b.id} style={{ padding: 16, borderColor: COLORS.green, borderWidth: 1.5 }}>
                   <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
                     <Text style={{ fontSize: 14, fontWeight: "700", color: COLORS.navy }}>
                       {b.bookingCode} • {b.serviceCategory}
                     </Text>
-                    <View style={styles.scheduledBadge}>
-                      <Text style={styles.scheduledBadgeText}>{b.status}</Text>
+                    <View
+                      style={[
+                        styles.scheduledBadge,
+                        { backgroundColor: b.status === "IN_PROGRESS" ? "rgba(22, 21, 51, 0.12)" : "rgba(76, 175, 132, 0.15)" },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.scheduledBadgeText,
+                          { color: b.status === "IN_PROGRESS" ? COLORS.navy : COLORS.green },
+                        ]}
+                      >
+                        {b.status === "IN_PROGRESS" ? "🔧 IN PROGRESS (ON SITE)" : "🚗 ACCEPTED (ON THE WAY)"}
+                      </Text>
                     </View>
                   </View>
                   <Text style={{ fontSize: 13, fontWeight: "600", color: "#1A1A1A", marginTop: 4 }}>
@@ -287,12 +300,12 @@ export const HzBookingScheduleScreen: React.FC<{
                   <Text style={{ fontSize: 12, color: "#555555", marginTop: 2 }}>
                     Technician: {b.provider?.fullName || "Assigned Technician"}
                   </Text>
-                  <Text style={{ fontSize: 12, color: COLORS.navy, fontWeight: "600", marginTop: 4 }}>
-                    📅 {String(b.appointmentDate).slice(0, 10)} at {b.startTime} - {b.endTime} • PKR {b.estimatedPrice}
+                  <Text style={{ fontSize: 12, color: COLORS.green, fontWeight: "700", marginTop: 4 }}>
+                    📅 Appointment: {String(b.appointmentDate).slice(0, 10)} at {b.startTime} - {b.endTime} • PKR {b.estimatedPrice}
                   </Text>
                   <HzButton
                     label="Track Job Status & Location →"
-                    style={{ marginTop: 10, height: 38 }}
+                    style={{ marginTop: 10, height: 38, backgroundColor: COLORS.green }}
                     onPress={() => onSelectBooking && onSelectBooking(b, "job-status")}
                   />
                 </HzCard>
@@ -300,10 +313,37 @@ export const HzBookingScheduleScreen: React.FC<{
             </View>
           )}
 
-          {/* 3. COMPLETED & PAST JOBS SECTION */}
+          {/* 3. REJECTED / DECLINED REQUESTS SECTION */}
+          {rejectedBookings.length > 0 && (
+            <View style={{ gap: 8 }}>
+              <Text style={styles.groupHeader}>❌ Declined Requests ({rejectedBookings.length})</Text>
+              {rejectedBookings.map((b) => (
+                <HzCard key={b.id} style={{ padding: 14, backgroundColor: "rgba(220, 38, 38, 0.04)", borderColor: "rgba(220, 38, 38, 0.3)", borderWidth: 1 }}>
+                  <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                    <Text style={{ fontSize: 14, fontWeight: "700", color: COLORS.navy }}>
+                      {b.bookingCode} • {b.serviceCategory}
+                    </Text>
+                    <View style={{ backgroundColor: "rgba(220, 38, 38, 0.15)", paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10 }}>
+                      <Text style={{ fontSize: 10, fontWeight: "700", color: "#DC2626" }}>DECLINED BY PROVIDER</Text>
+                    </View>
+                  </View>
+                  <Text style={{ fontSize: 12, color: "#555555", marginTop: 4 }}>
+                    {b.provider?.fullName} was unavailable for this time slot ({String(b.appointmentDate).slice(0, 10)}).
+                  </Text>
+                  <HzButton
+                    label="Choose Another Available Ustad →"
+                    style={{ marginTop: 8, height: 36, backgroundColor: COLORS.navy }}
+                    onPress={() => setActiveTab("book_slot")}
+                  />
+                </HzCard>
+              ))}
+            </View>
+          )}
+
+          {/* 4. COMPLETED & PAST JOBS SECTION */}
           {pastBookings.length > 0 && (
             <View style={{ gap: 8 }}>
-              <Text style={styles.groupHeader}>✅ Completed & Past ({pastBookings.length})</Text>
+              <Text style={styles.groupHeader}>✅ Completed & Dispute History ({pastBookings.length})</Text>
               {pastBookings.map((b) => (
                 <HzCard key={b.id} style={{ padding: 14 }}>
                   <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>

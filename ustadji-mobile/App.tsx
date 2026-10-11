@@ -210,7 +210,14 @@ export default function App() {
         return (
           <HzAwaitingScreen
             booking={currentBooking}
-            onCancel={() => setCurrentScreen("main")}
+            onBack={() => {
+              setActiveTab("bookings");
+              setCurrentScreen("main");
+            }}
+            onCancel={() => {
+              setActiveTab("bookings");
+              setCurrentScreen("main");
+            }}
             onAccepted={() => setCurrentScreen("job-status")}
           />
         );

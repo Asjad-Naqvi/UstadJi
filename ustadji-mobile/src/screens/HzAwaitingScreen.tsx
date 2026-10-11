@@ -1,17 +1,19 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, Alert } from "react-native";
-import { Clock, CheckCircle2, X } from "lucide-react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from "react-native";
+import { ArrowLeft, Clock, CheckCircle2, X } from "lucide-react-native";
 import { COLORS } from "../theme/theme";
 import { HzButton } from "../components/HzPrimitives";
 import { api } from "../services/api";
 
 interface HzAwaitingScreenProps {
+  onBack?: () => void;
   onCancel: () => void;
   onAccepted: () => void;
   booking?: any;
 }
 
 export const HzAwaitingScreen: React.FC<HzAwaitingScreenProps> = ({
+  onBack,
   onCancel,
   onAccepted,
   booking,
@@ -21,7 +23,6 @@ export const HzAwaitingScreen: React.FC<HzAwaitingScreenProps> = ({
 
   const bookingCode = booking?.bookingCode || "";
   const providerName = booking?.provider?.fullName || "Service Provider";
-  const providerId = booking?.providerId;
 
   useEffect(() => {
     let pollInterval: any;
@@ -33,11 +34,11 @@ export const HzAwaitingScreen: React.FC<HzAwaitingScreenProps> = ({
           const fresh = await api.getBooking(booking.id);
           if (fresh.status === "SCHEDULED" || fresh.status === "IN_PROGRESS") {
             clearInterval(pollInterval);
-            Alert.alert("Request Accepted! 🎉", `${providerName} accepted your booking request.`);
+            Alert.alert("Request Accepted! 🎉", `${providerName} accepted your booking request. Ustad is on the way!`);
             onAccepted();
           } else if (fresh.status === "REJECTED" || fresh.status === "EXPIRED" || fresh.status === "CANCELLED") {
             clearInterval(pollInterval);
-            Alert.alert("Booking Update", `Your booking request was ${fresh.status.toLowerCase()}.`);
+            Alert.alert("Booking Update", `Your booking request was ${fresh.status.toLowerCase()} by provider.`);
             onCancel();
           }
         } catch (e) {
@@ -56,52 +57,57 @@ export const HzAwaitingScreen: React.FC<HzAwaitingScreenProps> = ({
     };
   }, [booking?.id]);
 
-  const handleSimulateAcceptance = async () => {
-    if (!booking?.id || !providerId) return;
-    try {
-      setLoading(true);
-      await api.acceptBooking(booking.id, providerId);
-      onAccepted();
-    } catch (e) {
-      Alert.alert("Acceptance Failed", (e as Error).message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const mins = Math.floor(secondsLeft / 60);
   const secs = secondsLeft % 60;
   const timeFormatted = `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
 
   return (
     <View style={styles.container}>
-      {/* Pulsing Timer Circle */}
-      <View style={styles.pulseContainer}>
-        <View style={styles.outerRing} />
-        <View style={styles.innerCircle}>
-          <Clock size={40} color="#FFFFFF" />
+      {/* Top Header with Back Button */}
+      <View style={styles.topHeader}>
+        <TouchableOpacity
+          onPress={onBack || onCancel}
+          style={styles.backBtn}
+        >
+          <ArrowLeft size={22} color={COLORS.navy} />
+        </TouchableOpacity>
+        <Text style={styles.topHeaderTitle}>Waiting for Confirmation</Text>
+      </View>
+
+      <View style={styles.body}>
+        {/* Pulsing Timer Circle */}
+        <View style={styles.pulseContainer}>
+          <View style={styles.outerRing} />
+          <View style={styles.innerCircle}>
+            <Clock size={40} color="#FFFFFF" />
+          </View>
         </View>
-      </View>
 
-      <Text style={styles.heading}>Awaiting Confirmation</Text>
-      <Text style={styles.subheading}>30-Minute Response Window Active ({bookingCode})</Text>
+        <Text style={styles.heading}>Awaiting Ustad Response</Text>
+        <Text style={styles.subheading}>30-Minute Response Window Active ({bookingCode})</Text>
 
-      {/* Countdown Timer */}
-      <View style={styles.timerBox}>
-        <Text style={styles.timerDigits}>{timeFormatted}</Text>
-        <Text style={styles.timerLabel}>Time remaining for Ustad to accept</Text>
-      </View>
+        {/* Countdown Timer */}
+        <View style={styles.timerBox}>
+          <Text style={styles.timerDigits}>{timeFormatted}</Text>
+          <Text style={styles.timerLabel}>Time remaining for Ustad to accept</Text>
+        </View>
 
-      <Text style={styles.infoText}>
-        {providerName} has been notified. Your selected time slot is temporarily reserved while awaiting the Ustad's approval.
-      </Text>
+        <Text style={styles.infoText}>
+          {providerName} has been notified. You can exit this screen anytime — your order is saved under "My Orders" tab and will notify you when accepted!
+        </Text>
 
-      <View style={styles.btnStack}>
-        <HzButton
-          label="Cancel Request"
-          variant="secondary"
-          onPress={onCancel}
-        />
+        <View style={styles.btnStack}>
+          <HzButton
+            label="Back to My Orders"
+            style={{ backgroundColor: COLORS.navy }}
+            onPress={onBack || onCancel}
+          />
+          <HzButton
+            label="Cancel Booking Request"
+            variant="danger"
+            onPress={onCancel}
+          />
+        </View>
       </View>
     </View>
   );
@@ -111,6 +117,31 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#FAF8F5",
+  },
+  topHeader: {
+    height: 56,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#E8E3DB",
+    gap: 12,
+  },
+  backBtn: {
+    padding: 6,
+    borderRadius: 20,
+    backgroundColor: "#FAF8F5",
+    borderWidth: 1,
+    borderColor: "#E8E3DB",
+  },
+  topHeaderTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#161533",
+  },
+  body: {
+    flex: 1,
     alignItems: "center",
     justifyContent: "center",
     padding: 24,
