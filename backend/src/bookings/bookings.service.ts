@@ -514,9 +514,10 @@ export class BookingsService {
     // Validate state transitions
     const validTransitions: Record<string, string[]> = {
       PENDING_ACCEPTANCE: ["CANCELLED", "REJECTED", "EXPIRED", "SCHEDULED"],
-      SCHEDULED: ["IN_PROGRESS", "CANCELLED"],
-      IN_PROGRESS: ["COMPLETED", "CANCELLED"],
-      COMPLETED: [],
+      SCHEDULED: ["IN_PROGRESS", "CANCELLED", "DISPUTED"],
+      IN_PROGRESS: ["COMPLETED", "CANCELLED", "DISPUTED"],
+      COMPLETED: ["DISPUTED"],
+      DISPUTED: ["COMPLETED", "CANCELLED", "IN_PROGRESS"],
       CANCELLED: [],
       EXPIRED: [],
       REJECTED: [],
@@ -533,7 +534,7 @@ export class BookingsService {
       where: { id: bookingId },
       data: {
         status: dto.status,
-        ...(dto.status === "CANCELLED" && { cancellationReason: dto.reason }),
+        ...((dto.status === "CANCELLED" || dto.status === "DISPUTED") && { cancellationReason: dto.reason }),
         statusHistory: {
           create: {
             fromStatus: booking.status,
@@ -570,6 +571,28 @@ export class BookingsService {
         title: "Job Completed Successfully! 🎉",
         body: `Kaam mukammal ho gaya hai. Invoice check karein aur review dein.`,
         type: "JOB_COMPLETED",
+      });
+      await this.notificationService.sendNotification({
+        recipientId: booking.providerId,
+        bookingId: booking.id,
+        title: "Job Marked Completed 🎉",
+        body: `Booking ${booking.bookingCode} status has been updated to COMPLETED.`,
+        type: "JOB_COMPLETED",
+      });
+    } else if (dto.status === "DISPUTED") {
+      await this.notificationService.sendNotification({
+        recipientId: booking.customerId,
+        bookingId: booking.id,
+        title: "Dispute Opened ⚠️",
+        body: `Dispute filed for ${booking.bookingCode}. Admin support is reviewing the issue.`,
+        type: "DISPUTE_RAISED",
+      });
+      await this.notificationService.sendNotification({
+        recipientId: booking.providerId,
+        bookingId: booking.id,
+        title: "Dispute Opened ⚠️",
+        body: `Dispute filed for ${booking.bookingCode}. Admin support is reviewing the issue.`,
+        type: "DISPUTE_RAISED",
       });
     }
 

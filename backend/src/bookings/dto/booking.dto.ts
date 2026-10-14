@@ -59,7 +59,7 @@ export class RescheduleBookingDto {
 export class UpdateBookingStatusDto {
   @IsNotEmpty()
   @IsString()
-  status: "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
+  status: "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "DISPUTED";
 
   @IsOptional()
   @IsString()

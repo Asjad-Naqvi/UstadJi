@@ -1,0 +1,110 @@
+name: 🖥️ Backend CI
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - "backend/**"
+      - ".github/workflows/backend-ci.yml"
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - "backend/**"
+
+env:
+  NODE_VERSION: "20"
+  WORKING_DIR: ./backend
+
+jobs:
+  # ─────────────────────────────────────────────────────────
+  # JOB 1: Type-check & Build
+  # ─────────────────────────────────────────────────────────
+  build:
+    name: 🔍 Type Check & Build
+    runs-on: ubuntu-latest
+
+    env:
+      DATABASE_URL: "file:./ci-test.db"
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
+      JWT_EXPIRATION: "7d"
+      REDIS_URL: ""          # intentionally blank — falls back to in-memory
+      NODE_ENV: "test"
+      PORT: "4000"
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🟢 Set up Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: backend/package-lock.json
+
+      - name: 📦 Install dependencies
+        working-directory: ${{ env.WORKING_DIR }}
+        run: npm ci
+
+      - name: 🗄️ Generate Prisma Client
+        working-directory: ${{ env.WORKING_DIR }}
+        run: npx prisma generate
+
+      - name: 🔍 TypeScript type check
+        working-directory: ${{ env.WORKING_DIR }}
+        run: npx tsc --noEmit
+
+      - name: 🏗️ Compile NestJS build
+        working-directory: ${{ env.WORKING_DIR }}
+        run: npm run build
+
+      - name: 📤 Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-dist
+          path: backend/dist
+          retention-days: 7
+
+  # ─────────────────────────────────────────────────────────
+  # JOB 2: Tests (runs after build passes)
+  # ─────────────────────────────────────────────────────────
+  test:
+    name: 🧪 Run Tests
+    runs-on: ubuntu-latest
+    needs: build
+
+    env:
+      DATABASE_URL: "file:./ci-test.db"
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
+      JWT_EXPIRATION: "7d"
+      REDIS_URL: ""
+      NODE_ENV: "test"
+      PORT: "4000"
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🟢 Set up Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: backend/package-lock.json
+
+      - name: 📦 Install dependencies
+        working-directory: ${{ env.WORKING_DIR }}
+        run: npm ci
+
+      - name: 🗄️ Generate Prisma Client
+        working-directory: ${{ env.WORKING_DIR }}
+        run: npx prisma generate
+
+      - name: 🗄️ Push DB schema (CI SQLite)
+        working-directory: ${{ env.WORKING_DIR }}
+        run: npx prisma db push --skip-generate
+
+      - name: 🧪 Run Jest tests
+        working-directory: ${{ env.WORKING_DIR }}
+        run: npm test --if-present
+        # NOTE: Add Jest to devDependencies and write test files to activate fully.
