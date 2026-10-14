@@ -21,7 +21,11 @@ export class SlotLockService implements OnModuleInit, OnModuleDestroy {
         maxRetriesPerRequest: 1,
         retryStrategy: () => null, // Don't hang indefinitely if Redis is not running
         lazyConnect: true,
+        enableOfflineQueue: false,
       });
+
+      // Handle error event so ioredis does not log unhandled aggregate errors
+      this.redisClient.on("error", () => {});
 
       await this.redisClient.connect();
       this.isRedisConnected = true;
