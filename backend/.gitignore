@@ -1,0 +1,5 @@
+.env
+.neon
+node_modules/
+dist/
+dev.db*
