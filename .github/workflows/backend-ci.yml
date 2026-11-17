@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      DATABASE_URL: "file:./ci-test.db"
+      DATABASE_URL: "postgresql://postgres:postgrespassword@localhost:5432/ustadji_ci?schema=public"
       JWT_SECRET: ${{ secrets.JWT_SECRET }}
       JWT_EXPIRATION: "7d"
       REDIS_URL: ""          # intentionally blank — falls back to in-memory
@@ -73,8 +73,23 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
 
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgrespassword
+          POSTGRES_DB: ustadji_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     env:
-      DATABASE_URL: "file:./ci-test.db"
+      DATABASE_URL: "postgresql://postgres:postgrespassword@localhost:5432/ustadji_ci?schema=public"
       JWT_SECRET: ${{ secrets.JWT_SECRET }}
       JWT_EXPIRATION: "7d"
       REDIS_URL: ""
@@ -100,7 +115,7 @@ jobs:
         working-directory: ${{ env.WORKING_DIR }}
         run: npx prisma generate
 
-      - name: 🗄️ Push DB schema (CI SQLite)
+      - name: 🗄️ Push DB schema (CI PostgreSQL)
         working-directory: ${{ env.WORKING_DIR }}
         run: npx prisma db push --skip-generate
 
