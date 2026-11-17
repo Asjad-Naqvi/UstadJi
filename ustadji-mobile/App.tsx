@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { clearAgentAuth } from './src/services/api';
 import {
   StatusBar,
   StyleSheet,
@@ -13,10 +14,10 @@ import { COLORS } from "./src/theme/theme";
 import { HzBottomNav } from "./src/components/HzBottomNav";
 import { HzLoginScreen } from "./src/screens/HzLoginScreen";
 import { HzRoleSelectionScreen } from "./src/screens/HzRoleSelectionScreen";
-import { HzChatScreen } from "./src/screens/HzChatScreen";
 import { HzHomeScreen } from "./src/screens/HzHomeScreen";
 import { HzBookingScheduleScreen } from "./src/screens/HzBookingScheduleScreen";
 import { HzAiBookingChatScreen } from "./src/screens/HzAiBookingChatScreen";
+import { AgentChatProvider } from './src/components/AgentChatProvider';
 import { HzIssueCaptureScreen } from "./src/screens/HzIssueCaptureScreen";
 import { HzIssueAnalyzingScreen } from "./src/screens/HzIssueAnalyzingScreen";
 import { HzIssueSummaryScreen } from "./src/screens/HzIssueSummaryScreen";
@@ -62,6 +63,7 @@ export default function App() {
   };
 
   const handleSignOut = () => {
+    clearAgentAuth();
     setCurrentScreen("login");
     setCurrentUser(null);
   };
@@ -105,11 +107,8 @@ export default function App() {
       // CONSUMER & PROVIDER SUB-FLOW SCREENS (Full Screen Flow)
       case "chat":
         return (
-          <HzChatScreen
-            onFindProvider={() => setCurrentScreen("provider-results")}
-            onReportIssue={() => setCurrentScreen("issue-capture")}
-            onTrackBooking={() => setCurrentScreen("job-status")}
-            onNewAIBooking={() => setCurrentScreen("ai-booking-chat")}
+          <HzAiBookingChatScreen
+            onNavigate={() => { setActiveTab("explore"); setCurrentScreen("main"); }}
           />
         );
 
@@ -272,11 +271,8 @@ export default function App() {
                   />
                 )}
                 {activeTab === "chat" && (
-                  <HzChatScreen
-                    onFindProvider={() => setCurrentScreen("provider-results")}
-                    onReportIssue={() => setCurrentScreen("issue-capture")}
-                    onTrackBooking={() => setCurrentScreen("job-status")}
-                    onNewAIBooking={() => setCurrentScreen("ai-booking-chat")}
+                  <HzAiBookingChatScreen
+                    onNavigate={() => setActiveTab("explore")}
                   />
                 )}
                 {activeTab === "bookings" && (
@@ -393,10 +389,12 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
+      <AgentChatProvider key={currentUser?.id || 'signed-out'}>
       <SafeAreaView style={styles.safeArea}>
         <ExpoStatusBar style="dark" />
         {renderScreen()}
       </SafeAreaView>
+      </AgentChatProvider>
     </SafeAreaProvider>
   );
 }

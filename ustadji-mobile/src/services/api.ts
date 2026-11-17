@@ -15,15 +15,28 @@ function getHostIp(): string {
 
 export const API_HOST_IP = getHostIp();
 export const API_BASE_URL =
+  process.env.EXPO_PUBLIC_API_BASE_URL ||
+  (
   Platform.OS === "web"
     ? "http://localhost:4000"
-    : `http://${API_HOST_IP}:4000`;
+    : `http://${API_HOST_IP}:4000`);
+
+let agentToken: string | null = null;
+export function clearAgentAuth() { agentToken = null; }
+export async function agentChat(body: {sessionId?:string;revision?:number;message?:string;providerId?:string;startTime?:string;endTime?:string;confirm?:boolean}) {
+  if(!agentToken) throw new Error('AI chat ke liye backend par dobara login karein. Offline demo login supported nahi.');
+  const res = await fetch(`${API_BASE_URL}/agent/chat`, {method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${agentToken}`},body:JSON.stringify(body)});
+  const data = await res.json();
+  if(!res.ok) throw new Error(Array.isArray(data.message)?data.message.join(', '):data.message||'Agent request failed');
+  return data;
+}
 
 console.log(`🌐 [UstadJi API] Connecting to backend at: ${API_BASE_URL}`);
 
 export const api = {
   // Auth
   async login(email: string, password: string) {
+    agentToken = null;
     const res = await fetch(`${API_BASE_URL}/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -33,7 +46,9 @@ export const api = {
       const err = await res.json();
       throw new Error(err.message || "Login failed");
     }
-    return res.json();
+    const data = await res.json();
+    agentToken = data.accessToken;
+    return data;
   },
 
   async signup(data: {

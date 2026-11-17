@@ -8,6 +8,7 @@ import { QueueModule } from "./queue/queue.module";
 import { AuthModule } from "./auth/auth.module";
 import { ProvidersModule } from "./providers/providers.module";
 import { BookingsModule } from "./bookings/bookings.module";
+import { AgentModule } from './agent/agent.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { BookingsModule } from "./bookings/bookings.module";
     AuthModule,
     ProvidersModule,
     BookingsModule,
+    AgentModule,
   ],
 })
 export class AppModule {}
