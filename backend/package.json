@@ -18,7 +18,12 @@
     "prisma:seed": "ts-node prisma/seed.ts",
     "prisma:status": "ts-node prisma/db-status.ts",
     "prisma:export": "ts-node prisma/export-data.ts",
-    "prisma:import": "ts-node prisma/import-data.ts"
+    "prisma:import": "ts-node prisma/import-data.ts",
+    "test:agent": "ts-node --project tsconfig.json test/agent.integration-check.ts",
+    "test:agent:understanding": "ts-node --project tsconfig.json test/agent-understanding-check.ts",
+    "test:agent:understanding:live": "ts-node --project tsconfig.json test/agent-understanding-live.ts",
+    "test:agent:live": "ts-node --project tsconfig.json test/agent.integration-check.ts --live",
+    "agent:fixture": "ts-node --project tsconfig.json test/agent.integration-check.ts --serve"
   },
   "dependencies": {
     "@neon/config": "^1.14.0",

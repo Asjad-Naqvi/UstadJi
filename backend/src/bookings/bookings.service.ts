@@ -157,6 +157,10 @@ export class BookingsService {
    */
   async createBooking(dto: CreateBookingDto) {
     const cleanDateStr = new Date(dto.appointmentDate).toISOString().split("T")[0];
+    const slots = await this.getAvailableSlots(dto.providerId, cleanDateStr);
+    if (!slots.some(s => s.startTime === dto.startTime && s.endTime === dto.endTime && s.isAvailable && !s.isLocked)) {
+      throw new ConflictException("This provider slot is not available. Refresh availability.");
+    }
 
     // 1. Check if an active booking already exists in DB for this provider & slot
     const startOfDay = new Date(cleanDateStr);
@@ -185,16 +189,19 @@ export class BookingsService {
       300
     );
 
-    // If lock failed but NO active booking exists in DB, release stale memory lock and retry
+    // A live lock can belong to an in-flight request; never clear another request's lock.
     if (!lockRes.success) {
-      this.logger.warn(`Clearing stale slot lock for ${dto.providerId} on ${cleanDateStr} at ${dto.startTime}`);
-      await this.slotLockService.releaseSlotLock(this.slotLockService.getLockKey(dto.providerId, cleanDateStr, dto.startTime));
-      lockRes = await this.slotLockService.acquireSlotLock(dto.providerId, cleanDateStr, dto.startTime, 300);
+      throw new ConflictException("This slot is being booked. Refresh availability.");
     }
 
     const lockKey = lockRes.lockKey;
 
     try {
+      const racedBooking = await this.prisma.booking.findFirst({where: {
+        providerId: dto.providerId, appointmentDate: {gte:startOfDay,lte:endOfDay},
+        startTime:dto.startTime, status:{in:["PENDING_ACCEPTANCE","SCHEDULED","IN_PROGRESS"]},
+      }});
+      if(racedBooking)throw new ConflictException("This slot was just booked. Refresh availability.");
       // 3. Fetch provider & preferences
       const provider = await this.prisma.user.findUnique({
         where: { id: dto.providerId },

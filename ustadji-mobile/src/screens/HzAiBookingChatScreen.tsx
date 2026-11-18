@@ -1,219 +1,92 @@
-import React, { useState } from "react";
-import {
-  View,
-  Text,
-  ScrollView,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  Image,
-} from "react-native";
-import { Bot, Send, Mic, Sparkles, Star, ChevronRight, X, Check } from "lucide-react-native";
-import { COLORS } from "../theme/theme";
-
-interface ChatMessage {
-  id: string;
-  sender: "user" | "agent";
-  text: string;
-  time: string;
-  chips?: string[];
-  providerCard?: {
-    id: string;
-    name: string;
-    trade: string;
-    rating: string;
-    price: string;
-    avatar: string;
-  };
-}
+import React, { useRef } from 'react';
+import { View, Text, ScrollView, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { Bot, Send } from 'lucide-react-native';
+import { COLORS } from '../theme/theme';
+import { useAgentConversation } from '../components/AgentChatProvider';
 
 export const HzAiBookingChatScreen: React.FC<{ user?: any; onNavigate: (s: string) => void }> = ({
   user,
   onNavigate,
 }) => {
-  const firstName = user?.fullName ? user.fullName.split(" ")[0] : "Customer";
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: "1",
-      sender: "agent",
-      text: `Assalam-o-Alaikum, ${firstName}! Main aapka UstadJi AI assistant hoon. Aaj aapko kis kisam ki service chahiye?`,
-      time: "10:30 AM",
-      chips: ["Plumber chahiye", "AC repair karwana hai", "Electrician book karo", "Report Issue (+ Photo/Voice)"],
-    },
-  ]);
-  const [inputText, setInputText] = useState("");
-  const [isListening, setIsListening] = useState(false);
-
-  const handleSend = (textToSend?: string) => {
-    const text = textToSend || inputText;
-    if (!text.trim()) return;
-
-    const userMsg: ChatMessage = {
-      id: Date.now().toString(),
-      sender: "user",
-      text,
-      time: "10:31 AM",
-    };
-
-    let replyMsg: ChatMessage;
-
-    if (text.toLowerCase().includes("plumb") || text.toLowerCase().includes("pipe") || text.toLowerCase().includes("leak")) {
-      replyMsg = {
-        id: (Date.now() + 1).toString(),
-        sender: "agent",
-        text: "Ji bilkul! Aap ke area F-7 mein 2 top-rated Plumbers available hain:",
-        time: "10:31 AM",
-        providerCard: {
-          id: "p1",
-          name: "Ustad Tariq Mehmood",
-          trade: "Master Plumber (12 yrs exp)",
-          rating: "4.9 ★ (128 reviews)",
-          price: "Rs. 800/hr",
-          avatar: "https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=150&auto=format&fit=crop&q=80",
-        },
-        chips: ["Confirm Booking with Tariq", "Show 2nd Plumber", "Ask for Price Details"],
-      };
-    } else if (text.includes("Report Issue")) {
-      onNavigate("issue_capture");
-      return;
-    } else {
-      replyMsg = {
-        id: (Date.now() + 1).toString(),
-        sender: "agent",
-        text: "Samajh gaya! Kya aap iss baare mein audio ya photo share karna chahenge taake hum exact pricing aur issue diagnose kar sakein?",
-        time: "10:31 AM",
-        chips: ["Upload Photo / Video", "Record Voice Note", "Direct Provider Match"],
-      };
-    }
-
-    setMessages((prev) => [...prev, userMsg, replyMsg]);
-    setInputText("");
-  };
-
+  const { messages, inputText, setInputText, result, loading, error, act, send, newChat } = useAgentConversation();
+  const feed = useRef<React.ComponentRef<typeof ScrollView>>(null);
   return (
     <View style={styles.container}>
-      {/* CHAT HEADER */}
       <View style={styles.header}>
-        <View style={styles.avatarCircle}>
-          <Bot size={22} color="#FFFFFF" />
-        </View>
+        <Bot size={24} color={COLORS.navy} />
         <View style={{ flex: 1 }}>
           <Text style={styles.agentTitle}>UstadJi AI Agent</Text>
-          <Text style={styles.agentStatus}>Online • Powered by LLaMA NLU</Text>
+          <Text style={styles.agentStatus}>Local Ollama · Experimental Roman Urdu</Text>
         </View>
+        <TouchableOpacity accessibilityLabel="Start new chat" disabled={loading} onPress={newChat}>
+          <Text>New chat</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => onNavigate("home")}>
+          <Text>Back</Text>
+        </TouchableOpacity>
       </View>
-
-      {/* CHAT FEED */}
-      <ScrollView style={styles.feed} showsVerticalScrollIndicator={false}>
-        {messages.map((msg) => (
-          <View key={msg.id} style={styles.msgWrapper}>
-            {msg.sender === "agent" && (
-              <View style={styles.smallAvatar}>
-                <Bot size={14} color="#FFFFFF" />
-              </View>
-            )}
-
-            <View style={{ flex: 1, alignItems: msg.sender === "user" ? "flex-end" : "flex-start" }}>
-              <View
-                style={[
-                  styles.bubble,
-                  msg.sender === "user" ? styles.userBubble : styles.agentBubble,
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.msgText,
-                    msg.sender === "user" ? styles.userMsgText : styles.agentMsgText,
-                  ]}
-                >
-                  {msg.text}
-                </Text>
-
-                {/* EMBEDDED PROVIDER CARD */}
-                {msg.providerCard && (
-                  <View style={styles.cardEmbed}>
-                    <Image source={{ uri: msg.providerCard.avatar }} style={styles.cardAvatar} />
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.cardName}>{msg.providerCard.name}</Text>
-                      <Text style={styles.cardTrade}>{msg.providerCard.trade}</Text>
-                      <Text style={styles.cardRating}>{msg.providerCard.rating}</Text>
-                      <Text style={styles.cardPrice}>{msg.providerCard.price}</Text>
-                    </View>
-                    <TouchableOpacity
-                      style={styles.cardBtn}
-                      onPress={() => onNavigate("provider_results")}
-                    >
-                      <Text style={styles.cardBtnText}>Select</Text>
-                    </TouchableOpacity>
-                  </View>
-                )}
-              </View>
-
-              <Text style={styles.timeText}>{msg.time}</Text>
-
-              {/* INTENT CHIPS */}
-              {msg.chips && (
-                <View style={styles.chipsRow}>
-                  {msg.chips.map((chip, idx) => (
-                    <TouchableOpacity
-                      key={idx}
-                      style={styles.chipBtn}
-                      onPress={() => handleSend(chip)}
-                    >
-                      <Text style={styles.chipText}>{chip}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              )}
-            </View>
+      <ScrollView ref={feed} style={styles.feed} onContentSizeChange={() => feed.current?.scrollToEnd({ animated: true })}>
+        {messages.map((m) => (
+          <View
+            key={m.id}
+            style={[
+              styles.bubble,
+              m.sender === "user" ? styles.userBubble : styles.agentBubble,
+              { alignSelf: m.sender === "user" ? "flex-end" : "flex-start", marginBottom: 12 },
+            ]}
+          >
+            <Text style={[styles.msgText, m.sender === "user" ? styles.userMsgText : styles.agentMsgText]}>
+              {m.text}
+            </Text>
           </View>
         ))}
+        {!!error && <Text accessibilityRole="alert" style={{ color: "#B42318", padding: 10 }}>{error}</Text>}
+        {result?.simulated && <Text style={{ padding: 10, color: COLORS.navy }}>Test mode — sirf simulated booking; ustad ko request nahi jayegi.</Text>}
+        {loading && <ActivityIndicator accessibilityLabel="Agent jawab tayyar kar raha hai" />}
+        {!loading && !result?.booking && result?.providers.map((p) => (
+          <TouchableOpacity key={p.id} style={[styles.chipBtn, { marginBottom: 8 }]} onPress={() => void act({ providerId: p.id }, p.name + " select karein")}>
+            <Text style={styles.cardName}>{p.name} — {p.trade}</Text>
+            <Text>Estimated hourly rate: PKR {p.estimatedHourlyRate} (final invoice alag ho sakti hai)</Text>
+          </TouchableOpacity>
+        ))}
+        {!loading && !result?.booking && result?.slots.map((s) => (
+          <TouchableOpacity key={s.startTime} style={[styles.chipBtn, { marginBottom: 8 }]} onPress={() => void act(s, s.startTime + " se " + s.endTime + " select karein")}>
+            <Text>{s.startTime}–{s.endTime}</Text>
+          </TouchableOpacity>
+        ))}
+        {!loading && result?.summary && !result.booking && (
+          <View style={styles.cardEmbed}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.cardName}>Booking details — saved address par visit</Text>
+              <Text>{result.summary}</Text>
+              <TouchableOpacity
+                disabled={!result.writesEnabled}
+                style={[styles.chipBtn, { marginTop: 12, opacity: result.writesEnabled ? 1 : 0.5 }]}
+                onPress={() => void act({ confirm: true }, result.simulated ? "Test booking confirm karein" : "In details par booking request bhejein")}
+              >
+                <Text>{result.writesEnabled ? (result.simulated ? "Confirm test booking" : "Confirm request") : "Preview only — booking writes disabled"}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+        {!!result?.booking && <Text style={styles.cardName}>{result.booking.bookingCode} · {result.booking.status}</Text>}
       </ScrollView>
-
-      {/* VOICE LISTENING OVERLAY */}
-      {isListening && (
-        <View style={styles.voiceOverlay}>
-          <Text style={styles.voiceTitle}>Listening... (Urdu/English)</Text>
-          <View style={styles.waveformRow}>
-            <View style={[styles.waveBar, { height: 16 }]} />
-            <View style={[styles.waveBar, { height: 28 }]} />
-            <View style={[styles.waveBar, { height: 40 }]} />
-            <View style={[styles.waveBar, { height: 20 }]} />
-            <View style={[styles.waveBar, { height: 32 }]} />
-          </View>
-          <View style={styles.voiceControls}>
-            <TouchableOpacity style={styles.voiceCancel} onPress={() => setIsListening(false)}>
-              <X size={20} color="#FFFFFF" />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.voiceConfirm}
-              onPress={() => {
-                setIsListening(false);
-                handleSend("Pani ka pipe leak ho raha hai kitchen mein");
-              }}
-            >
-              <Check size={20} color="#FFFFFF" />
-            </TouchableOpacity>
-          </View>
-        </View>
-      )}
-
-      {/* INPUT BAR */}
       <View style={styles.inputBar}>
-        <TouchableOpacity style={styles.micBtn} onPress={() => setIsListening(true)}>
-          <Mic size={20} color={COLORS.navy} />
-        </TouchableOpacity>
-
         <TextInput
+          accessibilityLabel="Roman Urdu booking message"
+          editable={!loading && !result?.booking}
           style={styles.inputField}
-          placeholder="Type or record in Roman Urdu..."
-          placeholderTextColor={COLORS.textMuted}
+          placeholder="Roman Urdu mein likhein; date YYYY-MM-DD"
           value={inputText}
           onChangeText={setInputText}
-          onSubmitEditing={() => handleSend()}
+          onSubmitEditing={send}
         />
-
-        <TouchableOpacity style={styles.sendBtn} onPress={() => handleSend()}>
+        <TouchableOpacity
+          accessibilityLabel="Send message"
+          disabled={loading || !!result?.booking}
+          style={styles.sendBtn}
+          onPress={send}
+        >
           <Send size={18} color="#FFFFFF" />
         </TouchableOpacity>
       </View>
