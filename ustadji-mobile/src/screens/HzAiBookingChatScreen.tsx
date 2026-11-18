@@ -27,14 +27,16 @@ interface ChatMessage {
   };
 }
 
-export const HzAiBookingChatScreen: React.FC<{ onNavigate: (s: string) => void }> = ({
+export const HzAiBookingChatScreen: React.FC<{ user?: any; onNavigate: (s: string) => void }> = ({
+  user,
   onNavigate,
 }) => {
+  const firstName = user?.fullName ? user.fullName.split(" ")[0] : "Customer";
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: "1",
       sender: "agent",
-      text: "Assalam-o-Alaikum, Zain! Main aapka UstadJi AI assistant hoon. Aaj aapko kis kisam ki service chahiye?",
+      text: `Assalam-o-Alaikum, ${firstName}! Main aapka UstadJi AI assistant hoon. Aaj aapko kis kisam ki service chahiye?`,
       time: "10:30 AM",
       chips: ["Plumber chahiye", "AC repair karwana hai", "Electrician book karo", "Report Issue (+ Photo/Voice)"],
     },

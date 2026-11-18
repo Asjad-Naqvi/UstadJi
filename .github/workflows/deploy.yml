@@ -15,11 +15,40 @@ env:
 
 jobs:
   # ─────────────────────────────────────────────────────────
-  # JOB 1: Backend — Build & Deploy to Render
+  # JOB 1: Run DB Migrations (Production)
+  # ─────────────────────────────────────────────────────────
+  migrate-db:
+    name: 🗄️ Prisma Migrate (Production)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🟢 Set up Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: backend/package-lock.json
+
+      - name: 📦 Install dependencies
+        working-directory: ./backend
+        run: npm ci
+
+      - name: 🗄️ Run Prisma migrations
+        working-directory: ./backend
+        run: npx prisma migrate deploy
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+  # ─────────────────────────────────────────────────────────
+  # JOB 2: Backend — Build & Deploy to Render
   # ─────────────────────────────────────────────────────────
   deploy-backend:
     name: 🖥️ Deploy Backend → Render
     runs-on: ubuntu-latest
+    needs: migrate-db
 
     env:
       DATABASE_URL: "postgresql://postgres:postgrespassword@localhost:5432/ustadji_prod?schema=public"
@@ -68,56 +97,45 @@ jobs:
           fi
 
   # ─────────────────────────────────────────────────────────
-  # JOB 2: Run DB Migrations (after backend deploy)
-  # ─────────────────────────────────────────────────────────
-  migrate-db:
-    name: 🗄️ Prisma Migrate (Production)
-    runs-on: ubuntu-latest
-    needs: deploy-backend
-
-    steps:
-      - name: 📥 Checkout repository
-        uses: actions/checkout@v4
-
-      - name: 🟢 Set up Node.js ${{ env.NODE_VERSION }}
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: "npm"
-          cache-dependency-path: backend/package-lock.json
-
-      - name: 📦 Install dependencies
-        working-directory: ./backend
-        run: npm ci
-
-      - name: 🗄️ Run Prisma migrations
-        working-directory: ./backend
-        run: npx prisma migrate deploy
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-
-  # ─────────────────────────────────────────────────────────
-  # JOB 3: Health Check (after migrations)
+  # JOB 3: Health Check (after backend deploy)
   # ─────────────────────────────────────────────────────────
   health-check:
     name: ✅ Backend Health Check
     runs-on: ubuntu-latest
-    needs: migrate-db
+    needs: deploy-backend
 
     steps:
-      - name: ⏳ Wait 30s for Render to finish spinning up
-        run: sleep 30
-
-      - name: 🩺 Ping /health endpoint
+      - name: 🩺 Poll /health endpoint until HTTP 200
         run: |
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${{ secrets.BACKEND_PROD_URL }}/health" || echo "000")
-          echo "Health check status: $STATUS"
-          if [ "$STATUS" = "200" ]; then
-            echo "✅ Backend is healthy!"
-          else
-            echo "❌ Health check failed — status $STATUS"
-            exit 1
+          PROD_URL="${{ secrets.BACKEND_PROD_URL }}"
+          if [ -z "$PROD_URL" ]; then
+            echo "⚠️  BACKEND_PROD_URL secret not set — skipping health check"
+            exit 0
           fi
+
+          HEALTH_URL="${PROD_URL%/}/health"
+          echo "Polling health endpoint: $HEALTH_URL"
+
+          MAX_ATTEMPTS=20
+          INTERVAL=15
+          ATTEMPT=1
+
+          while [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$HEALTH_URL" || echo "000")
+            echo "Attempt $ATTEMPT/$MAX_ATTEMPTS: HTTP status code is $STATUS"
+
+            if [ "$STATUS" = "200" ]; then
+              echo "✅ Backend is healthy and responding with HTTP 200!"
+              exit 0
+            fi
+
+            echo "Backend not ready yet. Retrying in ${INTERVAL}s..."
+            sleep $INTERVAL
+            ATTEMPT=$((ATTEMPT + 1))
+          done
+
+          echo "❌ Health check timed out after $MAX_ATTEMPTS attempts (5 minutes)."
+          exit 1
 
   # ─────────────────────────────────────────────────────────
   # JOB 4: EAS Production Submit (Google Play)
