@@ -115,6 +115,7 @@ export default function App() {
       case "ai-booking-chat":
         return (
           <HzAiBookingChatScreen
+            user={currentUser}
             onNavigate={(s) => {
               if (s === "home") setCurrentScreen("main");
               else if (s === "issue_capture") setCurrentScreen("issue-capture");
@@ -260,6 +261,7 @@ export default function App() {
               <>
                 {activeTab === "explore" && (
                   <HzHomeScreen
+                    user={currentUser}
                     onBack={() => setCurrentScreen("login")}
                     onNavigate={(screen) => {
                       if (screen === "ai_chat") setCurrentScreen("chat");

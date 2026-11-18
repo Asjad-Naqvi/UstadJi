@@ -1,8 +1,8 @@
 # 🚀 UstadJi — CI/CD Pipeline
 
 > **Project**: UstadJi (FYP) — On-demand Home Services Platform  
-> **Stack**: NestJS Backend · Expo React Native Mobile · Prisma/SQLite · Redis (optional)  
-> **Repository**: `d:\FYP` (Git mono-repo)
+> **Stack**: NestJS Backend · Expo React Native Mobile · Prisma/PostgreSQL (Neon) · Redis (optional)  
+> **Repository**: `c:\Users\Admin\Documents\FYP\UstadJi` (Git mono-repo)
 
 ---
 
@@ -62,7 +62,7 @@ flowchart TD
         S1["EAS Build\nExpo Preview Channel"]
         S2["Backend Deploy\nRender / Railway Staging"]
         S3["Prisma Migrate\nnpx prisma migrate deploy"]
-        S4["Smoke Tests\n/health endpoint check"]
+        S4["Smoke Tests\n/health poll (20×15s retry)"]
         S2-->S3-->S4
         S1-->S4
     end
@@ -98,7 +98,7 @@ flowchart TD
 | Code editing | VSCode / Antigravity IDE | TypeScript source editing |
 | Backend hot-reload | `ts-node-dev --respawn` | Instant restart on file change |
 | Mobile dev server | `npx expo start` | Live reload via Expo Go / Web |
-| DB inspection | `npx prisma studio` | Browse & edit SQLite records |
+| DB inspection | `npx prisma studio` | Browse & edit PostgreSQL records (Neon) |
 | DB schema changes | `npx prisma db push` | Apply schema without migrations |
 
 ---
@@ -115,7 +115,7 @@ main
 
 - All features developed on **feature branches**
 - PRs merged to `main` only after local testing
-- `.gitignore` excludes: `node_modules/`, `prisma/dev.db`, `.env`, `dist/`
+- `.gitignore` excludes: `node_modules/`, `.env`, `dist/` (no local DB file — using Neon PostgreSQL)
 
 ---
 
@@ -170,7 +170,7 @@ jobs:
 
 > **Environment Variables (Staging)**:
 > ```env
-> DATABASE_URL=file:./staging.db
+> DATABASE_URL=postgresql://<user>:<pass>@<neon-host>/neondb?sslmode=require
 > JWT_SECRET=<staging-secret>
 > REDIS_URL=redis://staging-redis:6379
 > NODE_ENV=staging
@@ -183,7 +183,7 @@ jobs:
 | Component | Platform | Notes |
 |-----------|----------|-------|
 | NestJS Backend | **Render** (Prod tier) | `node dist/main` |
-| Database | **PostgreSQL** (Render DB) | Migrate from SQLite for prod |
+| Database | **PostgreSQL** (Neon) | Cloud-hosted, `sslmode=require` |
 | Mobile App | **EAS Submit** | Google Play / TestFlight |
 | Slot Locking | **Redis** (Upstash) | Production Redis instance |
 | Secrets | **Render Env Vars** / GitHub Secrets | Never committed to git |
@@ -232,9 +232,9 @@ graph LR
     end
 
     subgraph DB["🗄️ Data Layer"]
-        SQLITE["SQLite\ndev.db"]
+        NEON["PostgreSQL (Neon)\nCloud DB"]
         SCHEMA["schema.prisma\n5 models"]
-        SCHEMA --> SQLITE
+        SCHEMA --> NEON
     end
 
     MAPI -->|"HTTP :4000"| AUTH
@@ -264,14 +264,14 @@ graph LR
 
 ```powershell
 # Terminal 1 — Backend
-cd d:\FYP\backend
-npm start                          # ts-node src/main.ts → :4000
+cd C:\Users\Admin\Documents\FYP\UstadJi\backend
+npx ts-node src/main.ts              # → :4000  (needs backend/.env with DATABASE_URL)
 
 # Terminal 2 — Mobile
-cd d:\FYP\ustadji-mobile
-npx expo start                     # Metro bundler → scan QR with Expo Go
+cd C:\Users\Admin\Documents\FYP\UstadJi\ustadji-mobile
+npx expo start                       # Metro bundler → scan QR with Expo Go
 
 # Optional — DB GUI
-cd d:\FYP\backend
-npx prisma studio                  # Opens at http://localhost:5555
+cd C:\Users\Admin\Documents\FYP\UstadJi\backend
+npx prisma studio                    # Opens at http://localhost:5555
 ```

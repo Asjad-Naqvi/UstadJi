@@ -109,7 +109,7 @@ export const HzLoginScreen: React.FC<HzLoginScreenProps> = ({
       // Fallback to local profile if offline
       const fallbackUser =
         selectedRole === "consumer"
-          ? { id: "1aaf561c-c519-49a1-8762-8a8fb540aa4b", fullName: CONSUMER_PROFILES[selectedConsumerIndex].name, email: currentEmail, phone }
+          ? { id: "1aaf561c-c519-49a1-8762-8a8fb540aa4b", fullName: CONSUMER_PROFILES[selectedConsumerIndex].name, email: currentEmail, phone, sector: CONSUMER_PROFILES[selectedConsumerIndex].sector }
           : { id: "18cc5f37-d760-4bdc-a2fe-f6d49c61d54b", fullName: PROVIDER_PROFILES[selectedProviderIndex].name, email: currentEmail, phone };
       onLoginSuccess(selectedRole, fallbackUser);
     } finally {

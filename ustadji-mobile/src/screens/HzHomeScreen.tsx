@@ -27,6 +27,7 @@ import { COLORS } from "../theme/theme";
 import { HzCard, HzButton } from "../components/HzPrimitives";
 
 interface HomeScreenProps {
+  user?: any;
   onNavigate: (screen: string) => void;
   onBack?: () => void;
 }
@@ -65,7 +66,12 @@ const FEATURED_USTADS = [
   },
 ];
 
-export const HzHomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, onBack }) => {
+export const HzHomeScreen: React.FC<HomeScreenProps> = ({ user, onNavigate, onBack }) => {
+  const firstName = user?.fullName ? user.fullName.split(" ")[0] : "Zain";
+  const sector = user?.customerProfile?.sector || user?.sector || "F-7/2";
+  const city = user?.customerProfile?.city || user?.city || "Islamabad";
+  const location = `${sector}, ${city}`;
+
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       {/* HEADER WITH BACK BUTTON */}
@@ -77,8 +83,8 @@ export const HzHomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, onBack }) 
           <ArrowLeft size={22} color={COLORS.navy} />
         </TouchableOpacity>
         <View style={{ flex: 1 }}>
-          <Text style={styles.greetingText}>Assalam-o-Alaikum, Zain! 👋</Text>
-          <Text style={styles.locationText}>📍 F-7/2, Islamabad</Text>
+          <Text style={styles.greetingText}>Assalam-o-Alaikum, {firstName}! 👋</Text>
+          <Text style={styles.locationText}>📍 {location}</Text>
         </View>
         <TouchableOpacity
           style={styles.aiBadge}

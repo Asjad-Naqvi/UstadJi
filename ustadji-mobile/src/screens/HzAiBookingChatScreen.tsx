@@ -4,23 +4,94 @@ import { Bot, Send } from 'lucide-react-native';
 import { COLORS } from '../theme/theme';
 import { useAgentConversation } from '../components/AgentChatProvider';
 
-export const HzAiBookingChatScreen: React.FC<{onNavigate:(s:string)=>void}> = ({onNavigate}) => {
-  const {messages,inputText,setInputText,result,loading,error,act,send,newChat}=useAgentConversation();
-  const feed=useRef<React.ComponentRef<typeof ScrollView>>(null);
-  return <View style={styles.container}>
-    <View style={styles.header}><Bot size={24} color={COLORS.navy}/><View style={{flex:1}}><Text style={styles.agentTitle}>UstadJi AI Agent</Text><Text style={styles.agentStatus}>Local Ollama · Experimental Roman Urdu</Text></View><TouchableOpacity accessibilityLabel="Start new chat" disabled={loading} onPress={newChat}><Text>New chat</Text></TouchableOpacity><TouchableOpacity onPress={()=>onNavigate('home')}><Text>Back</Text></TouchableOpacity></View>
-    <ScrollView ref={feed} style={styles.feed} onContentSizeChange={()=>feed.current?.scrollToEnd({animated:true})}>
-      {messages.map(m=><View key={m.id} style={[styles.bubble,m.sender==='user'?styles.userBubble:styles.agentBubble,{alignSelf:m.sender==='user'?'flex-end':'flex-start',marginBottom:12}]}><Text style={[styles.msgText,m.sender==='user'?styles.userMsgText:styles.agentMsgText]}>{m.text}</Text></View>)}
-      {!!error&&<Text accessibilityRole="alert" style={{color:'#B42318',padding:10}}>{error}</Text>}
-      {result?.simulated&&<Text style={{padding:10,color:COLORS.navy}}>Test mode — sirf simulated booking; ustad ko request nahi jayegi.</Text>}
-      {loading&&<ActivityIndicator accessibilityLabel="Agent jawab tayyar kar raha hai"/>}
-      {!loading&&!result?.booking&&result?.providers.map(p=><TouchableOpacity key={p.id} style={[styles.chipBtn,{marginBottom:8}]} onPress={()=>void act({providerId:p.id},p.name+' select karein')}><Text style={styles.cardName}>{p.name} — {p.trade}</Text><Text>Estimated hourly rate: PKR {p.estimatedHourlyRate} (final invoice alag ho sakti hai)</Text></TouchableOpacity>)}
-      {!loading&&!result?.booking&&result?.slots.map(s=><TouchableOpacity key={s.startTime} style={[styles.chipBtn,{marginBottom:8}]} onPress={()=>void act(s,s.startTime+' se '+s.endTime+' select karein')}><Text>{s.startTime}–{s.endTime}</Text></TouchableOpacity>)}
-      {!loading&&result?.summary&&!result.booking&&<View style={styles.cardEmbed}><View style={{flex:1}}><Text style={styles.cardName}>Booking details — saved address par visit</Text><Text>{result.summary}</Text><TouchableOpacity disabled={!result.writesEnabled} style={[styles.chipBtn,{marginTop:12,opacity:result.writesEnabled?1:0.5}]} onPress={()=>void act({confirm:true},result.simulated?'Test booking confirm karein':'In details par booking request bhejein')}><Text>{result.writesEnabled?(result.simulated?'Confirm test booking':'Confirm request'):'Preview only — booking writes disabled'}</Text></TouchableOpacity></View></View>}
-      {!!result?.booking&&<Text style={styles.cardName}>{result.booking.bookingCode} · {result.booking.status}</Text>}
-    </ScrollView>
-    <View style={styles.inputBar}><TextInput accessibilityLabel="Roman Urdu booking message" editable={!loading&&!result?.booking} style={styles.inputField} placeholder="Roman Urdu mein likhein; date YYYY-MM-DD" value={inputText} onChangeText={setInputText} onSubmitEditing={send}/><TouchableOpacity accessibilityLabel="Send message" disabled={loading||!!result?.booking} style={styles.sendBtn} onPress={send}><Send size={18} color="#FFFFFF"/></TouchableOpacity></View>
-  </View>;
+export const HzAiBookingChatScreen: React.FC<{ user?: any; onNavigate: (s: string) => void }> = ({
+  user,
+  onNavigate,
+}) => {
+  const { messages, inputText, setInputText, result, loading, error, act, send, newChat } = useAgentConversation();
+  const feed = useRef<React.ComponentRef<typeof ScrollView>>(null);
+  return (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Bot size={24} color={COLORS.navy} />
+        <View style={{ flex: 1 }}>
+          <Text style={styles.agentTitle}>UstadJi AI Agent</Text>
+          <Text style={styles.agentStatus}>Local Ollama · Experimental Roman Urdu</Text>
+        </View>
+        <TouchableOpacity accessibilityLabel="Start new chat" disabled={loading} onPress={newChat}>
+          <Text>New chat</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => onNavigate("home")}>
+          <Text>Back</Text>
+        </TouchableOpacity>
+      </View>
+      <ScrollView ref={feed} style={styles.feed} onContentSizeChange={() => feed.current?.scrollToEnd({ animated: true })}>
+        {messages.map((m) => (
+          <View
+            key={m.id}
+            style={[
+              styles.bubble,
+              m.sender === "user" ? styles.userBubble : styles.agentBubble,
+              { alignSelf: m.sender === "user" ? "flex-end" : "flex-start", marginBottom: 12 },
+            ]}
+          >
+            <Text style={[styles.msgText, m.sender === "user" ? styles.userMsgText : styles.agentMsgText]}>
+              {m.text}
+            </Text>
+          </View>
+        ))}
+        {!!error && <Text accessibilityRole="alert" style={{ color: "#B42318", padding: 10 }}>{error}</Text>}
+        {result?.simulated && <Text style={{ padding: 10, color: COLORS.navy }}>Test mode — sirf simulated booking; ustad ko request nahi jayegi.</Text>}
+        {loading && <ActivityIndicator accessibilityLabel="Agent jawab tayyar kar raha hai" />}
+        {!loading && !result?.booking && result?.providers.map((p) => (
+          <TouchableOpacity key={p.id} style={[styles.chipBtn, { marginBottom: 8 }]} onPress={() => void act({ providerId: p.id }, p.name + " select karein")}>
+            <Text style={styles.cardName}>{p.name} — {p.trade}</Text>
+            <Text>Estimated hourly rate: PKR {p.estimatedHourlyRate} (final invoice alag ho sakti hai)</Text>
+          </TouchableOpacity>
+        ))}
+        {!loading && !result?.booking && result?.slots.map((s) => (
+          <TouchableOpacity key={s.startTime} style={[styles.chipBtn, { marginBottom: 8 }]} onPress={() => void act(s, s.startTime + " se " + s.endTime + " select karein")}>
+            <Text>{s.startTime}–{s.endTime}</Text>
+          </TouchableOpacity>
+        ))}
+        {!loading && result?.summary && !result.booking && (
+          <View style={styles.cardEmbed}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.cardName}>Booking details — saved address par visit</Text>
+              <Text>{result.summary}</Text>
+              <TouchableOpacity
+                disabled={!result.writesEnabled}
+                style={[styles.chipBtn, { marginTop: 12, opacity: result.writesEnabled ? 1 : 0.5 }]}
+                onPress={() => void act({ confirm: true }, result.simulated ? "Test booking confirm karein" : "In details par booking request bhejein")}
+              >
+                <Text>{result.writesEnabled ? (result.simulated ? "Confirm test booking" : "Confirm request") : "Preview only — booking writes disabled"}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+        {!!result?.booking && <Text style={styles.cardName}>{result.booking.bookingCode} · {result.booking.status}</Text>}
+      </ScrollView>
+      <View style={styles.inputBar}>
+        <TextInput
+          accessibilityLabel="Roman Urdu booking message"
+          editable={!loading && !result?.booking}
+          style={styles.inputField}
+          placeholder="Roman Urdu mein likhein; date YYYY-MM-DD"
+          value={inputText}
+          onChangeText={setInputText}
+          onSubmitEditing={send}
+        />
+        <TouchableOpacity
+          accessibilityLabel="Send message"
+          disabled={loading || !!result?.booking}
+          style={styles.sendBtn}
+          onPress={send}
+        >
+          <Send size={18} color="#FFFFFF" />
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
 };
 
 const styles = StyleSheet.create({
