@@ -62,7 +62,24 @@ backend/          NestJS API, Prisma schema, conversational agent, and tests
 ustadji-mobile/   Expo / React Native mobile application
 UstadJi/          React / Vite web UI prototype
 .github/          GitHub Actions workflows
+docs/             Project documentation and feature specifications
 ```
+
+## Documentation
+
+Project documentation and design specifications are organized in the `docs/` directory:
+
+- [Feature Specifications](docs/basic_features.md)
+- [CI/CD Pipeline](docs/cicd_pipeline.md)
+- [Damage Assessment Feature Plan](docs/damage-assessment-feature-plan.md)
+- [Data Sources Reference](docs/data-sources-reference.md)
+- [Database Schema](docs/database_schema.md)
+- [Fake Review Detection](docs/feature_fake_review_detection.md)
+- [Predictive Maintenance](docs/feature_predictive_maintenance.md)
+- [Architecture and Implementation Plan](docs/plan1.md)
+- [Pricing Engine Feature Plan](docs/pricing-engine-feature-plan.md)
+- [Technology Stack](docs/tech-stack.md)
+- [Voice Feature Plan](docs/voice-feature-plan_.md)
 
 ## Run locally
 
